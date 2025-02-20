@@ -18,7 +18,7 @@ func TestFetchData(t *testing.T) {
 		}))
 		defer testServer.Close()
 
-		got := scraper.FetchHTML(testServer.URL)
+		got, _ := scraper.FetchHTML(testServer.URL)
 
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)
@@ -40,9 +40,9 @@ func TestFetchData(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			got := scraper.FetchHTML(testServer.URL)
+			_, got := scraper.FetchHTML(testServer.URL)
 
-			if got != want {
+			if got.Error() != want {
 				t.Errorf("got %q, want %q", got, want)
 			}
 		}

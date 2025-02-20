@@ -6,13 +6,13 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-func FetchHTML(url string) string {
+func FetchHTML(url string) (string, error) {
 	var responseBody string
-	var err string
+	var err error
 	collector := colly.NewCollector()
 
 	collector.OnError(func(r *colly.Response, e error) {
-		err = fmt.Sprintf("%d: %s", r.StatusCode, e.Error())
+		err = fmt.Errorf("%d: %s", r.StatusCode, e.Error())
 	})
 
 	collector.OnHTML("html", func(e *colly.HTMLElement) {
@@ -20,9 +20,5 @@ func FetchHTML(url string) string {
 	})
 
 	collector.Visit(url)
-	if err == "" {
-		return responseBody
-	} else {
-		return err
-	}
+	return responseBody, err
 }
