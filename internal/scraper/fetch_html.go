@@ -1,14 +1,15 @@
 package scraper
 
 import (
-	"io"
-	"net/http"
+	"github.com/gocolly/colly/v2"
 )
 
 func FetchHTML(url string) string {
-	response, _ := http.Get(url)
-	defer response.Body.Close()
-	bodyByte, _ := io.ReadAll(response.Body)
-	bodyString := string(bodyByte)
-	return bodyString
+	var responseBody string
+	collector := colly.NewCollector()
+	collector.OnHTML("html", func(e *colly.HTMLElement) {
+		responseBody, _ = e.DOM.Html()
+	})
+	collector.Visit(url)
+	return responseBody
 }
