@@ -1,9 +1,18 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
 )
 
 func main() {
-	println(scraper.FetchHTML("https://www.imdb.com/find/?s=tt&q=test&ref_=nv_sr_sm"))
+	links, err := scraper.FetchItems("https://www.imdb.com/find/?s=tt&q=test&ref_=nv_sr_sm")
+	if err == nil {
+		for _, link := range links {
+			fmt.Printf("%s: %s\n", link.Title, link.Url)
+		}
+	} else {
+		fmt.Println(err)
+	}
 }

@@ -6,8 +6,8 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-func FetchHTML(url string) (string, error) {
-	var responseBody string
+func FetchItems(url string) ([]Link, error) {
+	var links = []Link{}
 	var err error
 	collector := colly.NewCollector()
 
@@ -15,10 +15,10 @@ func FetchHTML(url string) (string, error) {
 		err = fmt.Errorf("%d: %s", r.StatusCode, e.Error())
 	})
 
-	collector.OnHTML("html", func(e *colly.HTMLElement) {
-		responseBody, _ = e.DOM.Html()
+	collector.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		links = append(links, Link{e.Text, e.Attr("href")})
 	})
 
 	collector.Visit(url)
-	return responseBody, err
+	return links, err
 }
