@@ -39,9 +39,9 @@ func TestFetchData(t *testing.T) {
 			got, _ := scraper.FetchItems(testServer.URL, "example test")
 			want := []scraper.Link{
 				{"Example", "https://example.com"},
-				{fmt.Sprintf("Example %s", phrase), fmt.Sprintf("https://example.com/%s", phrase)},
+				{"Example " + phrase, "https://example.com/" + phrase},
 				{"Test", "https://test.com"},
-				{fmt.Sprintf("Test %s", phrase), fmt.Sprintf("https://test.com/%s", phrase)},
+				{"Test " + phrase, "https://test.com/" + phrase},
 			}
 
 			if !reflect.DeepEqual(got, want) {
