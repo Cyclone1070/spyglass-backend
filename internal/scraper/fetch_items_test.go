@@ -1,7 +1,7 @@
 package scraper_test
 
 import (
-	"io"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -12,38 +12,41 @@ import (
 
 func TestFetchData(t *testing.T) {
 	t.Run("Return all links from page, sort out result matching query", func(t *testing.T) {
-		testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			io.WriteString(w, `<html>
+		testCases := []string{"2", "sublink", "subdomain", "sub"}
+		for _, phrase := range testCases {
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Fprintf(w, `<html>
 	<div class="container">
 		<div class="card">
 			<a href="https://example.com">Example</a>
 		</div>
 		<div class="card">
-			<a href="https://example.com/2">Example 2</a>
+			<a href="https://example.com/%s">Example %s</a>
 		</div>
 		<div class="card">
 			<a href="https://test.com">Test</a>
 		</div>
 		<div class="card">
-			<a href="https://test.com/2">Test 2</a>
+			<a href="https://test.com/%s">Test %s</a>
 		</div>
 		<div class="card">
 			<a href="https://wronglink.com">Wrong Link</a>
 		</div>
 	</div>
-</html>`)
-		}))
-		defer testServer.Close()
-		got, _ := scraper.FetchItems(testServer.URL, "example test")
-		want := []scraper.Link{
-			{"Example", "https://example.com"},
-			{"Example 2", "https://example.com/2"},
-			{"Test", "https://test.com"},
-			{"Test 2", "https://test.com/2"},
-		}
+</html>`, phrase, phrase, phrase, phrase)
+			}))
+			defer testServer.Close()
+			got, _ := scraper.FetchItems(testServer.URL, "example test")
+			want := []scraper.Link{
+				{"Example", "https://example.com"},
+				{fmt.Sprintf("Example %s", phrase), fmt.Sprintf("https://example.com/%s", phrase)},
+				{"Test", "https://test.com"},
+				{fmt.Sprintf("Test %s", phrase), fmt.Sprintf("https://test.com/%s", phrase)},
+			}
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("\ngot %q,\nwant %q", got, want)
+			if !reflect.DeepEqual(got, want) {
+				t.Errorf("\ngot %q,\nwant %q", got, want)
+			}
 		}
 	})
 
