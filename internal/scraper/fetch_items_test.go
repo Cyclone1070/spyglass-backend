@@ -14,11 +14,23 @@ func TestFetchData(t *testing.T) {
 	t.Run("Return all links from page, sort out result matching query", func(t *testing.T) {
 		testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, `<html>
-<a href="https://example.com">Example</a>
-<a href="https://example.com/2">Example 2</a>
-<a href="https://test.com">Test</a>
-<a href="https://test.com/2">Test 2</a>
-<a href="https://wronglink.com">Wrong Link</a>
+	<div class="container">
+		<div class="card">
+			<a href="https://example.com">Example</a>
+		</div>
+		<div class="card">
+			<a href="https://example.com/2">Example 2</a>
+		</div>
+		<div class="card">
+			<a href="https://test.com">Test</a>
+		</div>
+		<div class="card">
+			<a href="https://test.com/2">Test 2</a>
+		</div>
+		<div class="card">
+			<a href="https://wronglink.com">Wrong Link</a>
+		</div>
+	</div>
 </html>`)
 		}))
 		defer testServer.Close()
