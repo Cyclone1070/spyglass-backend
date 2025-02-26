@@ -7,12 +7,6 @@ import (
 )
 
 func main() {
-	links, err := scraper.FetchItems("https://www.imdb.com/find/?s=tt&q=test&ref_=nv_sr_sm", "test")
-	if err == nil {
-		for _, link := range links {
-			fmt.Printf("%s: %s\n", link.Title, link.Url)
-		}
-	} else {
-		fmt.Println(err)
-	}
+	pattern := scraper.FindCardIdentifier("https://www.imdb.com/find/?s=tt&q=test&ref_=nv_sr_sm", "test")
+	fmt.Println("\n" + pattern + "\n")
 }
