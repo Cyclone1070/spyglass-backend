@@ -36,12 +36,21 @@ func TestMapPageStructure(t *testing.T) {
 			"bottom": "",
 			"want":   "html > body > div.container > a",
 		},
+		// if multiple paths are found, return the most common one
+		{
+			"prefix": "<div class='wrongCard'><a href='https://wrongcard.com'>Wrong Card Example</a></div>",
+			"top":    "<div class='card'>",
+			"bottom": "</div>",
+			"want":   "html > body > div.container > div.card",
+		},
 	}
 	links := []string{"<a href='https://example.com'>Example</a>", "<a href='https://example.com/2'>Example 2</a>", "<a href='https://test.com'>Test</a>"}
 
 	for _, testCase := range testCases {
 		testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			io.WriteString(w, "<html><body><div class='container'>")
+			io.WriteString(w, "<html><body>")
+			fmt.Fprintf(w, "%s", testCase["prefix"])
+			io.WriteString(w, "<div class='container'>")
 
 			for _, link := range links {
 				fmt.Fprintf(w, "%s", testCase["top"])
