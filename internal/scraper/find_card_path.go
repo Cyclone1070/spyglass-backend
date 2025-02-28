@@ -9,48 +9,49 @@ import (
 
 func FindCardPath(url string, query string) string {
 	collector := colly.NewCollector()
-	// format as tag.class
-	var cardPath string
-	// flag to escape loop
-	found := false
+	// map of card paths to their number of ocurrences
+	cardPaths := make(map[string]int)
 	normalizedQuery := strings.Split(strings.ToLower(query), " ")
 
 	collector.OnHTML("a", func(e *colly.HTMLElement) {
-		if found {
+		// return if the text doesn't contain any of the query words
+		if !containsAny(strings.ToLower(e.Text), normalizedQuery) {
 			return
 		}
 
-		normalizedText := strings.ToLower(e.Text)
+		var currentCardPath string
+		parents := e.DOM.Parents()
 
-		if containsAny(normalizedText, normalizedQuery) {
-			parents := e.DOM.Parents()
-			parents.Each(func(i int, parent *goquery.Selection) {
-				parentSig := getElementSignature(parent)
-				// if already found the card, append the rest of the parents to the identifier
-				if found {
-					cardPath = parentSig + " > " + cardPath
-					return
-				}
-				// find the last parent that contains only 1 link
-				if len(parent.Find("a").Nodes) > 1 {
-					parentSig := getElementSignature(parent)
-					// if the <a> tag has at least 1 wrapper element
-					if i > 0 {
-						card := parents.Eq(i - 1)
-						cardPath = parentSig + " > " + getElementSignature(card)
-					} else /* if the <a> tag is the card itself */ {
-						cardPath = parentSig + " > " + getElementSignature(e.DOM)
-					}
-					// break the loop when found
-					found = true
-				}
-			})
+		for i := len(parents.Nodes) - 1; i >= -1; i-- {
+			// if the card is the <a> tag itself
+			if i == -1 {
+				currentCardPath += getElementSignature(e.DOM)
+				break
+			}
+
+			parent := parents.Eq(i)
+			parentSig := getElementSignature(parent)
+			// find the first parent that contains only 1 link
+			if len(parent.Find("a").Nodes) == 1 {
+				currentCardPath += parentSig
+				break
+			} else {
+				currentCardPath += parentSig + " > "
+			}
 		}
+		// increment the count of the card path
+		cardPaths[currentCardPath]++
 	})
 
 	collector.Visit(url)
-
-	return cardPath
+	// return the path with the most ocurrences
+	var mostCommonCardPath string
+	for path, count := range cardPaths {
+		if count > cardPaths[mostCommonCardPath] {
+			mostCommonCardPath = path
+		}
+	}
+	return mostCommonCardPath
 }
 
 func containsAny(s string, substrings []string) bool {
