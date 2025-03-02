@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	pattern := scraper.FindCardPath("https://www.imdb.com/find/?s=tt&q=test&ref_=nv_sr_sm", "test")
+	pattern, _ := scraper.FindCardPath("https://www.imdb.com/find/?s=tt&q=test&ref_=nv_sr_sm", "test")
 	fmt.Println("\n" + pattern + "\n")
 }

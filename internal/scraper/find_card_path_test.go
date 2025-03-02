@@ -63,10 +63,36 @@ func TestFindCardPath(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			got := scraper.FindCardPath(testServer.URL, "example test")
+			got, _ := scraper.FindCardPath(testServer.URL, "example test")
 
 			if got != testCase["want"] {
 				t.Errorf("got %q, want %q", got, testCase["want"])
+			}
+		})
+	}
+	// error tests
+	httpErrorCases := map[string]int{
+		"403: Forbidden":          http.StatusForbidden,
+		"401: Unauthorized":       http.StatusUnauthorized,
+		"400: Bad Request":        http.StatusBadRequest,
+		"404: Not Found":          http.StatusNotFound,
+		"408: Request Timeout":    http.StatusRequestTimeout,
+		"405: Method Not Allowed": http.StatusMethodNotAllowed,
+		"429: Too Many Requests":  http.StatusTooManyRequests,
+	}
+	for want, status := range httpErrorCases {
+		t.Run(want, func(t *testing.T) {
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, want, status)
+			}))
+			defer testServer.Close()
+
+			_, got := scraper.FindCardPath(testServer.URL, "")
+
+			if got == nil {
+				t.Errorf("got no error, want %q", want)
+			} else if got.Error() != want {
+				t.Errorf("got %q, want %q", got, want)
 			}
 		})
 	}

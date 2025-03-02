@@ -1,14 +1,16 @@
 package scraper
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
 
-func FindCardPath(url string, query string) string {
+func FindCardPath(url string, query string) (string, error) {
 	collector := colly.NewCollector()
+	var err error
 	// map of card paths to their number of ocurrences
 	cardPaths := make(map[string]int)
 	normalizedQuery := strings.Split(strings.ToLower(query), " ")
@@ -43,6 +45,10 @@ func FindCardPath(url string, query string) string {
 		cardPaths[currentCardPath]++
 	})
 
+	collector.OnError(func(r *colly.Response, e error) {
+		err = fmt.Errorf("%d: %s", r.StatusCode, e.Error())
+	})
+
 	collector.Visit(url)
 	// return the path with the most ocurrences
 	var mostCommonCardPath string
@@ -51,7 +57,7 @@ func FindCardPath(url string, query string) string {
 			mostCommonCardPath = path
 		}
 	}
-	return mostCommonCardPath
+	return mostCommonCardPath, err
 }
 
 func containsAny(s string, substrings []string) bool {
