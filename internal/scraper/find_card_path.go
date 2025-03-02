@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -46,7 +45,7 @@ func FindCardPath(url string, query string) (string, error) {
 	})
 
 	collector.OnError(func(r *colly.Response, e error) {
-		err = fmt.Errorf("%d: %s", r.StatusCode, e.Error())
+		err = e
 	})
 
 	collector.Visit(url)

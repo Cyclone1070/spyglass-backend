@@ -1,6 +1,7 @@
 package scraper_test
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -72,27 +73,27 @@ func TestFindCardPath(t *testing.T) {
 	}
 	// error tests
 	httpErrorCases := map[string]int{
-		"403: Forbidden":          http.StatusForbidden,
-		"401: Unauthorized":       http.StatusUnauthorized,
-		"400: Bad Request":        http.StatusBadRequest,
-		"404: Not Found":          http.StatusNotFound,
-		"408: Request Timeout":    http.StatusRequestTimeout,
-		"405: Method Not Allowed": http.StatusMethodNotAllowed,
-		"429: Too Many Requests":  http.StatusTooManyRequests,
+		"Forbidden":          http.StatusForbidden,
+		"Unauthorized":       http.StatusUnauthorized,
+		"Bad Request":        http.StatusBadRequest,
+		"Not Found":          http.StatusNotFound,
+		"Request Timeout":    http.StatusRequestTimeout,
+		"Method Not Allowed": http.StatusMethodNotAllowed,
+		"Too Many Requests":  http.StatusTooManyRequests,
 	}
-	for want, status := range httpErrorCases {
-		t.Run(want, func(t *testing.T) {
+	for wantMessage, status := range httpErrorCases {
+		t.Run(wantMessage, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Error(w, want, status)
+				http.Error(w, wantMessage, status)
 			}))
 			defer testServer.Close()
 
 			_, got := scraper.FindCardPath(testServer.URL, "")
 
 			if got == nil {
-				t.Errorf("got no error, want %q", want)
-			} else if got.Error() != want {
-				t.Errorf("got %q, want %q", got, want)
+				t.Errorf("got no error, want %q", wantMessage)
+			} else if errors.Is(got, errors.New(wantMessage)) {
+				t.Errorf("got %q, want %q", got, wantMessage)
 			}
 		})
 	}
