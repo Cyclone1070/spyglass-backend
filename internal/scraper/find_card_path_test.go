@@ -109,9 +109,10 @@ func TestFindCardPath(t *testing.T) {
 	parsingErrorCases := map[string]string{
 		"multiple paths with the same occurence counts": `
 <div class='card'>
-	<a href='https://example.com'>Example</a>
+	<a href='https://example.com'>Example Test</a>
 </div>
-<a href='https://example.com/2'>Example 2</a>`,
+<a href='https://example.com/2'>Example 2 Test</a>`,
+		"no card matches the query": ``,
 	}
 	for wantMessage, response := range parsingErrorCases {
 		t.Run(wantMessage, func(t *testing.T) {
@@ -122,7 +123,7 @@ func TestFindCardPath(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			_, got := scraper.FindCardPath(testServer.URL, "")
+			_, got := scraper.FindCardPath(testServer.URL, "test")
 
 			if got == nil {
 				t.Errorf("got no error, want %q", wantMessage)

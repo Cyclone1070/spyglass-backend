@@ -60,6 +60,11 @@ func FindCardPath(url string, query string) (string, error) {
 			err = errors.New("multiple paths with the same occurence counts")
 		}
 	}
+
+	if mostCommonCardPath == "" {
+		err = errors.New("no card matches the query")
+	}
+
 	return mostCommonCardPath, err
 }
 
