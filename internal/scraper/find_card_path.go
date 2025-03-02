@@ -57,7 +57,7 @@ func FindCardPath(url string, query string) (string, error) {
 			mostCommonCardPath = path
 			err = nil
 		} else if count == cardPaths[mostCommonCardPath] {
-			err = errors.New("multiple structures with the same occurence count")
+			err = errors.New("multiple paths with the same occurence counts")
 		}
 	}
 	return mostCommonCardPath, err
