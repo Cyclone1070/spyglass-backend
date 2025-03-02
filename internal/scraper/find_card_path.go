@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -54,6 +55,9 @@ func FindCardPath(url string, query string) (string, error) {
 	for path, count := range cardPaths {
 		if count > cardPaths[mostCommonCardPath] {
 			mostCommonCardPath = path
+			err = nil
+		} else if count == cardPaths[mostCommonCardPath] {
+			err = errors.New("multiple structures with the same occurence count")
 		}
 	}
 	return mostCommonCardPath, err

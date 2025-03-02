@@ -39,10 +39,16 @@ func TestFindCardPath(t *testing.T) {
 		},
 		{
 			"description": "if multiple paths found, return the most common one",
-			"prefix":      "<div class='wrongCard'><a href='https://wrongcard.com'>Wrong Card Example</a></div>",
-			"top":         "<div class='card'>",
-			"bottom":      "</div>",
-			"want":        "html > body > div.container > div.card",
+			"prefix": `
+<div class='wrongCard'>
+	<a href='https://wrongcard.com'>Wrong Card Example</a>
+</div>
+<div class='wrongCard2'>
+	<a href='https://wrongcard2.com'>Wrong Card 2 Example</a>
+</div>`,
+			"top":    "<div class='card'>",
+			"bottom": "</div>",
+			"want":   "html > body > div.container > div.card",
 		},
 	}
 	links := []string{"<a href='https://example.com'>Example</a>", "<a href='https://example.com/2'>Example 2</a>", "<a href='https://test.com'>Test</a>"}
@@ -60,13 +66,16 @@ func TestFindCardPath(t *testing.T) {
 					fmt.Fprintf(w, "%s", testCase["bottom"])
 				}
 
-				io.WriteString(w, "</div></body></html>")
+				io.WriteString(w, "</div>")
+				io.WriteString(w, "</body></html>")
 			}))
 			defer testServer.Close()
 
-			got, _ := scraper.FindCardPath(testServer.URL, "example test")
+			got, err := scraper.FindCardPath(testServer.URL, "example test")
 
-			if got != testCase["want"] {
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			} else if got != testCase["want"] {
 				t.Errorf("got %q, want %q", got, testCase["want"])
 			}
 		})
@@ -93,6 +102,31 @@ func TestFindCardPath(t *testing.T) {
 			if got == nil {
 				t.Errorf("got no error, want %q", wantMessage)
 			} else if errors.Is(got, errors.New(wantMessage)) {
+				t.Errorf("got %q, want %q", got, wantMessage)
+			}
+		})
+	}
+	parsingErrorCases := map[string]string{
+		"multiple paths with the same occurence counts": `
+<div class='card'>
+	<a href='https://example.com'>Example</a>
+</div>
+<a href='https://example.com/2'>Example 2</a>`,
+	}
+	for wantMessage, response := range parsingErrorCases {
+		t.Run(wantMessage, func(t *testing.T) {
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				io.WriteString(w, "<html><body>")
+				io.WriteString(w, response)
+				io.WriteString(w, "</body></html>")
+			}))
+			defer testServer.Close()
+
+			_, got := scraper.FindCardPath(testServer.URL, "")
+
+			if got == nil {
+				t.Errorf("got no error, want %q", wantMessage)
+			} else if got.Error() != wantMessage {
 				t.Errorf("got %q, want %q", got, wantMessage)
 			}
 		})
