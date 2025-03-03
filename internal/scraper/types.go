@@ -1,6 +1,7 @@
 package scraper
 
-type Link struct {
-	Title string
-	Url   string
+type CardContent struct {
+	Title     string
+	Url       string
+	OtherText []string
 }
