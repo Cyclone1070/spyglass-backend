@@ -51,7 +51,11 @@ func TestFindCardPath(t *testing.T) {
 			"want":   "html > body > div.container > div.card",
 		},
 	}
-	links := []string{"<a href='https://example.com'>Example</a>", "<a href='https://example.com/2'>Example 2</a>", "<a href='https://test.com'>Test</a>"}
+	links := []string{
+		"<a href='https://example.com'>Example</a>",
+		"<a href='https://example.com/2'>Example 2</a>",
+		"<a href='https://test.com'>Test</a>",
+	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase["description"], func(t *testing.T) {
@@ -61,9 +65,9 @@ func TestFindCardPath(t *testing.T) {
 				io.WriteString(w, "<div class='container'>")
 
 				for _, link := range links {
-					fmt.Fprintf(w, "%s", testCase["top"])
+					io.WriteString(w, testCase["top"])
 					io.WriteString(w, link)
-					fmt.Fprintf(w, "%s", testCase["bottom"])
+					io.WriteString(w, testCase["bottom"])
 				}
 
 				io.WriteString(w, "</div>")
