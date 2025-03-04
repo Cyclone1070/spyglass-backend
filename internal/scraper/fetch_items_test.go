@@ -1,7 +1,6 @@
 package scraper_test
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +16,7 @@ func TestFetchItems(t *testing.T) {
 		top         string
 		bottom      string
 		cardPath    string
+		otherText   []string
 		want        []scraper.CardContent
 	}
 	testCases := []TestCase{
@@ -31,8 +31,28 @@ func TestFetchItems(t *testing.T) {
 				{Title: "Test", Url: "https://test.com", OtherText: []string{}},
 			},
 		},
+		{
+			description: "return other text based on cardPath",
+			top:         "<div class='card'>",
+			bottom:      "</div>",
+			cardPath:    "html > body > div.container > div.card",
+			otherText: []string{
+				"<p>Other Text</p>",
+				"<p>Other Text 2</p><p>Other Text 3</p>",
+				"<p>Other Text Test</p>",
+			},
+			want: []scraper.CardContent{
+				{Title: "Example", Url: "https://example.com", OtherText: []string{"Other Text"}},
+				{Title: "Example 2", Url: "https://example.com/2", OtherText: []string{"Other Text 2", "Other Text 3"}},
+				{Title: "Test", Url: "https://test.com", OtherText: []string{"Other Text Test"}},
+			},
+		},
 	}
-	links := []string{"<a href='https://example.com'>Example</a>", "<a href='https://example.com/2'>Example 2</a>", "<a href='https://test.com'>Test</a>"}
+	links := []string{
+		"<a href='https://example.com'>Example</a>",
+		"<a href='https://example.com/2'>Example 2</a>",
+		"<a href='https://test.com'>Test</a>",
+	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
@@ -40,10 +60,13 @@ func TestFetchItems(t *testing.T) {
 				io.WriteString(w, "<html><body>")
 				io.WriteString(w, "<div class='container'>")
 
-				for _, link := range links {
-					fmt.Fprintf(w, "%s", testCase.top)
+				for i, link := range links {
+					io.WriteString(w, testCase.top)
+					if len(testCase.otherText) > i {
+						io.WriteString(w, testCase.otherText[i])
+					}
 					io.WriteString(w, link)
-					fmt.Fprintf(w, "%s", testCase.bottom)
+					io.WriteString(w, testCase.bottom)
 				}
 
 				io.WriteString(w, "</div>")
