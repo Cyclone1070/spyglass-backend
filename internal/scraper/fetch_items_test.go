@@ -83,6 +83,7 @@ func TestFetchItems(t *testing.T) {
 			}
 		})
 	}
+
 	t.Run("Return error if request fails", func(t *testing.T) {
 		errorCases := map[string]int{
 			"Forbidden":          http.StatusForbidden,
