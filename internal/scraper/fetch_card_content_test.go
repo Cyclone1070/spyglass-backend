@@ -86,7 +86,7 @@ func TestFetchCardContent(t *testing.T) {
 		})
 	}
 }
-func TestFetchErrors(t *testing.T) {
+func TestFetchCardContentErrors(t *testing.T) {
 	errorCases := map[string]int{
 		"Forbidden":          http.StatusForbidden,
 		"Unauthorized":       http.StatusUnauthorized,
