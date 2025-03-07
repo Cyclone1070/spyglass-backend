@@ -5,7 +5,7 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-func FetchItems(url string, cardPath string, query string) ([]CardContent, error) {
+func FetchCardContent(url string, cardPath string, query string) ([]CardContent, error) {
 	var cardContents = []CardContent{}
 	var err error
 
@@ -30,7 +30,7 @@ func FetchItems(url string, cardPath string, query string) ([]CardContent, error
 	collector.OnError(func(r *colly.Response, e error) {
 		err = e
 	})
-
 	collector.Visit(url)
+	err = nil
 	return cardContents, err
 }
