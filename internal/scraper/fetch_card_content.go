@@ -31,6 +31,5 @@ func FetchCardContent(url string, cardPath string, query string) ([]CardContent,
 		err = e
 	})
 	collector.Visit(url)
-	err = nil
 	return cardContents, err
 }
