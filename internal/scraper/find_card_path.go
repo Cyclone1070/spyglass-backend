@@ -50,6 +50,10 @@ func FindCardPath(url string, query string) (string, error) {
 	})
 
 	collector.Visit(url)
+	// return if there was a http error on request
+	if err != nil {
+		return "", err
+	}
 	// return the path with the most ocurrences
 	var mostCommonCardPath string
 	for path, count := range cardPaths {
