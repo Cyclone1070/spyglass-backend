@@ -10,7 +10,7 @@ import (
 	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
 )
 
-func TestFetchItems(t *testing.T) {
+func TestFetchCardContent(t *testing.T) {
 	type TestCase struct {
 		description string
 		top         string
@@ -48,6 +48,7 @@ func TestFetchItems(t *testing.T) {
 			},
 		},
 	}
+	// links to be found in the html response
 	links := []string{
 		"<a href='https://example.com'>Example</a>",
 		"<a href='https://example.com/2'>Example 2</a>",
@@ -56,6 +57,7 @@ func TestFetchItems(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.description, func(t *testing.T) {
+			// write html response
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
 				io.WriteString(w, "<div class='container'>")
@@ -74,7 +76,7 @@ func TestFetchItems(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			got, err := scraper.FetchItems(testServer.URL, testCase.cardPath, "example test")
+			got, err := scraper.FetchCardContent(testServer.URL, testCase.cardPath, "example test")
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -83,28 +85,31 @@ func TestFetchItems(t *testing.T) {
 			}
 		})
 	}
-
-	t.Run("Return error if request fails", func(t *testing.T) {
-		errorCases := map[string]int{
-			"Forbidden":          http.StatusForbidden,
-			"Unauthorized":       http.StatusUnauthorized,
-			"Bad Request":        http.StatusBadRequest,
-			"Not Found":          http.StatusNotFound,
-			"Request Timeout":    http.StatusRequestTimeout,
-			"Method Not Allowed": http.StatusMethodNotAllowed,
-			"Too Many Requests":  http.StatusTooManyRequests,
-		}
-		for want, status := range errorCases {
+}
+func TestFetchErrors(t *testing.T) {
+	errorCases := map[string]int{
+		"Forbidden":          http.StatusForbidden,
+		"Unauthorized":       http.StatusUnauthorized,
+		"Bad Request":        http.StatusBadRequest,
+		"Not Found":          http.StatusNotFound,
+		"Request Timeout":    http.StatusRequestTimeout,
+		"Method Not Allowed": http.StatusMethodNotAllowed,
+		"Too Many Requests":  http.StatusTooManyRequests,
+	}
+	for want, status := range errorCases {
+		t.Run(want, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, want, status)
 			}))
 			defer testServer.Close()
 
-			_, got := scraper.FetchItems(testServer.URL, "", "")
+			_, got := scraper.FetchCardContent(testServer.URL, "", "")
 
-			if got.Error() != want {
+			if got == nil {
+				t.Errorf("got no error, want %q", want)
+			} else if got.Error() != want {
 				t.Errorf("got %q, want %q", got, want)
 			}
-		}
-	})
+		})
+	}
 }
