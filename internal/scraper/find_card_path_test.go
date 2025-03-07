@@ -1,7 +1,6 @@
 package scraper_test
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -51,6 +50,7 @@ func TestFindCardPath(t *testing.T) {
 			"want":   "html > body > div.container > div.card",
 		},
 	}
+	// links to be found in the html response
 	links := []string{
 		"<a href='https://example.com'>Example</a>",
 		"<a href='https://example.com/2'>Example 2</a>",
@@ -84,8 +84,10 @@ func TestFindCardPath(t *testing.T) {
 			}
 		})
 	}
-	// error tests
-	httpErrorCases := map[string]int{
+}
+
+func TestFindCardPathHttpErrors(t *testing.T) {
+	testCases := map[string]int{
 		"Forbidden":          http.StatusForbidden,
 		"Unauthorized":       http.StatusUnauthorized,
 		"Bad Request":        http.StatusBadRequest,
@@ -94,7 +96,7 @@ func TestFindCardPath(t *testing.T) {
 		"Method Not Allowed": http.StatusMethodNotAllowed,
 		"Too Many Requests":  http.StatusTooManyRequests,
 	}
-	for wantMessage, status := range httpErrorCases {
+	for wantMessage, status := range testCases {
 		t.Run(wantMessage, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, wantMessage, status)
@@ -103,13 +105,12 @@ func TestFindCardPath(t *testing.T) {
 
 			_, got := scraper.FindCardPath(testServer.URL, "")
 
-			if got == nil {
-				t.Errorf("got no error, want %q", wantMessage)
-			} else if errors.Is(got, errors.New(wantMessage)) {
-				t.Errorf("got %q, want %q", got, wantMessage)
-			}
+			assertError(t, got, wantMessage)
 		})
 	}
+}
+
+func TestFindCardPathParsingErrors(t *testing.T) {
 	parsingErrorCases := map[string]string{
 		"multiple paths with the same occurence counts": `
 <div class='card'>
@@ -129,11 +130,15 @@ func TestFindCardPath(t *testing.T) {
 
 			_, got := scraper.FindCardPath(testServer.URL, "test")
 
-			if got == nil {
-				t.Errorf("got no error, want %q", wantMessage)
-			} else if got.Error() != wantMessage {
-				t.Errorf("got %q, want %q", got, wantMessage)
-			}
+			assertError(t, got, wantMessage)
 		})
+	}
+}
+func assertError(t testing.TB, got error, wantMessage string) {
+	t.Helper()
+	if got == nil {
+		t.Errorf("got no error, want %q", wantMessage)
+	} else if got.Error() != wantMessage {
+		t.Errorf("got %q, want %q", got, wantMessage)
 	}
 }
