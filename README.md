@@ -2,6 +2,8 @@
 
 A backend for custom search engine written in go.
 
+Test-driven development methodologies were strictly followed.
+
 # How It Works
 
 The goal of the program is to scape the search results from the websites that offer such functionality (e.g., https://www.imdb.com/find/?s=tt&q={query}&ref_=nv_sr_sm).
