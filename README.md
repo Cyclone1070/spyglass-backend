@@ -1,8 +1,6 @@
 # spyglass-backend
 
-A backend for custom search engine written in go.
-
-Test-driven development methodologies were strictly followed.
+A backend for custom search engine written in go with test driven development.
 
 # How It Works
 
