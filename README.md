@@ -1,5 +1,7 @@
 # spyglass-backend
 
+Preview demo with rate limited google api key: https://spyglass-cyclone.vercel.app
+
 A backend for custom search engine written in go with test driven development.
 
 # How It Works
