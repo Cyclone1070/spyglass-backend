@@ -5,9 +5,10 @@ import (
 	"io"
 )
 
-func UpdateCardPath(writer io.Writer) {
+func UpdateCardPaths(writer io.Writer) error {
 	cardPaths := map[string]string{
 		"card": "path",
 	}
-	json.NewEncoder(writer).Encode(cardPaths)
+	
+	return json.NewEncoder(writer).Encode(cardPaths)
 }
