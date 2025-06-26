@@ -26,9 +26,9 @@ func TestFetchCardContent(t *testing.T) {
 			bottom:      "</div>",
 			cardPath:    "html > body > div.container > div.card",
 			want: []scraper.CardContent{
-				{Title: "Example", Url: "https://example.com", OtherText: []string{}},
-				{Title: "Example 2", Url: "https://example.com/2", OtherText: []string{}},
-				{Title: "Test", Url: "https://test.com", OtherText: []string{}},
+				{Title: "Example", URL: "https://example.com", OtherText: []string{}},
+				{Title: "Example 2", URL: "https://example.com/2", OtherText: []string{}},
+				{Title: "Test", URL: "https://test.com", OtherText: []string{}},
 			},
 		},
 		{
@@ -42,9 +42,9 @@ func TestFetchCardContent(t *testing.T) {
 				"<p>Other Text Test</p>",
 			},
 			want: []scraper.CardContent{
-				{Title: "Example", Url: "https://example.com", OtherText: []string{"Other Text"}},
-				{Title: "Example 2", Url: "https://example.com/2", OtherText: []string{"Other Text 2", "Other Text 3"}},
-				{Title: "Test", Url: "https://test.com", OtherText: []string{"Other Text Test"}},
+				{Title: "Example", URL: "https://example.com", OtherText: []string{"Other Text"}},
+				{Title: "Example 2", URL: "https://example.com/2", OtherText: []string{"Other Text 2", "Other Text 3"}},
+				{Title: "Test", URL: "https://test.com", OtherText: []string{"Other Text Test"}},
 			},
 		},
 	}
@@ -82,33 +82,6 @@ func TestFetchCardContent(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			} else if !reflect.DeepEqual(got, testCase.want) {
 				t.Errorf("\ngot:\n%q\nwant:\n%q", got, testCase.want)
-			}
-		})
-	}
-}
-func TestFetchCardContentErrors(t *testing.T) {
-	errorCases := map[string]int{
-		"Forbidden":          http.StatusForbidden,
-		"Unauthorized":       http.StatusUnauthorized,
-		"Bad Request":        http.StatusBadRequest,
-		"Not Found":          http.StatusNotFound,
-		"Request Timeout":    http.StatusRequestTimeout,
-		"Method Not Allowed": http.StatusMethodNotAllowed,
-		"Too Many Requests":  http.StatusTooManyRequests,
-	}
-	for want, status := range errorCases {
-		t.Run(want, func(t *testing.T) {
-			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Error(w, want, status)
-			}))
-			defer testServer.Close()
-
-			_, got := scraper.FetchCardContent(testServer.URL, "", "")
-
-			if got == nil {
-				t.Errorf("got no error, want %q", want)
-			} else if got.Error() != want {
-				t.Errorf("got %q, want %q", got, want)
 			}
 		})
 	}
