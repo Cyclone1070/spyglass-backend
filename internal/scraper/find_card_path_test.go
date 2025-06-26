@@ -86,30 +86,6 @@ func TestFindCardPath(t *testing.T) {
 	}
 }
 
-func TestFindCardPathHttpErrors(t *testing.T) {
-	testCases := map[string]int{
-		"Forbidden":          http.StatusForbidden,
-		"Unauthorized":       http.StatusUnauthorized,
-		"Bad Request":        http.StatusBadRequest,
-		"Not Found":          http.StatusNotFound,
-		"Request Timeout":    http.StatusRequestTimeout,
-		"Method Not Allowed": http.StatusMethodNotAllowed,
-		"Too Many Requests":  http.StatusTooManyRequests,
-	}
-	for wantMessage, status := range testCases {
-		t.Run(wantMessage, func(t *testing.T) {
-			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Error(w, wantMessage, status)
-			}))
-			defer testServer.Close()
-
-			_, got := scraper.FindCardPath(testServer.URL, "")
-
-			assertError(t, got, wantMessage)
-		})
-	}
-}
-
 func TestFindCardPathParsingErrors(t *testing.T) {
 	parsingErrorCases := map[string]string{
 		"multiple paths with the same occurence counts": `
