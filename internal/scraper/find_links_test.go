@@ -31,20 +31,20 @@ func TestFindLinks(t *testing.T) {
 				for _, id := range testCase.ids {
 					fmt.Fprintf(
 						w,
-						`<h2 id="%s">%s</h2>
+						`<h2 id="%[1]s">%[1]s</h2>
 						<ul>
 							<li class="starred">
-								<strong><a href="https://link1%s.com">Link 1 %s</a></strong>, 
+								<strong><a href="https://link1%[1]s.com">Link 1 %[1]s</a></strong>, 
 								<a href="https://link1.com">2</a>, 
 								<a href="https://link1.com">3</a> 
 							</li>
 							<li class="starred">
-								<strong><a href="https://link2%s.com">Link 2 %s</a></strong>, 
+								<strong><a href="https://link2%[1]s.com">Link 2 %[1]s</a></strong>, 
 								<a href="https://link1.com">2</a>, 
 								<a href="https://link1.com">3</a> 
 							</li>
 						</ul>`,
-						id, id, id, id, id, id,
+						id,
 					)
 				}
 				io.WriteString(w, "</body></html>")

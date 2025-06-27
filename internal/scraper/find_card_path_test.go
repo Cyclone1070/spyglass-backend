@@ -8,46 +8,56 @@ import (
 	"testing"
 
 	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestFindCardPath(t *testing.T) {
-	testCases := []map[string]string{
+	testCases := []struct {
+		description string
+		top         string
+		bottom      string
+		want        string
+		prefix      string
+	}{
 		{
-			"description": "happy path, card is the direct parent of the link",
-			"top":         "<div class='card'>",
-			"bottom":      "</div>",
-			"want":        "html > body > div.container > div.card",
+			"happy path, card is the direct parent of the link",
+			"<div class='card'>",
+			"</div>",
+			"html > body > div.container > div.card",
+			"",
 		},
 		{
-			"description": "card is the grandparent of the link",
-			"top":         "<div class='cardGrandParent'><div class='insideWrapper'>",
-			"bottom":      "</div></div>",
-			"want":        "html > body > div.container > div.cardGrandParent",
+			"card is the grandparent of the link",
+			"<div class='cardGrandParent'><div class='insideWrapper'>",
+			"</div></div>",
+			"html > body > div.container > div.cardGrandParent",
+			"",
 		},
 		{
-			"description": "card has multiple class names",
-			"top":         "<div class='card2 card3'>",
-			"bottom":      "</div>",
-			"want":        "html > body > div.container > div.card2.card3",
+			"card has multiple class names",
+			"<div class='card2 card3'>",
+			"</div>",
+			"html > body > div.container > div.card2.card3",
+			"",
 		},
 		{
-			"description": "card is the <a> tag itself",
-			"top":         "",
-			"bottom":      "",
-			"want":        "html > body > div.container > a",
+			"card is the <a> tag itself",
+			"",
+			"",
+			"html > body > div.container > a",
+			"",
 		},
 		{
-			"description": "if multiple paths found, return the most common one",
-			"prefix": `
-<div class='wrongCard'>
-	<a href='https://wrongcard.com'>Wrong Card Example</a>
-</div>
-<div class='wrongCard2'>
-	<a href='https://wrongcard2.com'>Wrong Card 2 Example</a>
-</div>`,
-			"top":    "<div class='card'>",
-			"bottom": "</div>",
-			"want":   "html > body > div.container > div.card",
+			"if multiple paths found, return the most common one",
+			"<div class='card'>",
+			"</div>",
+			"html > body > div.container > div.card",
+			`<div class='wrongCard'>
+				<a href='https://wrongcard.com'>Wrong Card Example</a>
+			</div>
+			<div class='wrongCard2'>
+				<a href='https://wrongcard2.com'>Wrong Card 2 Example</a>
+			</div>`,
 		},
 	}
 	// links to be found in the html response
@@ -58,16 +68,16 @@ func TestFindCardPath(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase["description"], func(t *testing.T) {
+		t.Run(testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
-				fmt.Fprintf(w, "%s", testCase["prefix"])
+				fmt.Fprintf(w, "%s", testCase.prefix)
 				io.WriteString(w, "<div class='container'>")
 
 				for _, link := range links {
-					io.WriteString(w, testCase["top"])
+					io.WriteString(w, testCase.top)
 					io.WriteString(w, link)
-					io.WriteString(w, testCase["bottom"])
+					io.WriteString(w, testCase.bottom)
 				}
 
 				io.WriteString(w, "</div>")
@@ -79,8 +89,8 @@ func TestFindCardPath(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
-			} else if got != testCase["want"] {
-				t.Errorf("got %q, want %q", got, testCase["want"])
+			} else if diff := cmp.Diff(testCase.want, got); diff != "" {
+				t.Errorf("FindCardPath() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -110,6 +120,7 @@ func TestFindCardPathParsingErrors(t *testing.T) {
 		})
 	}
 }
+
 func assertError(t testing.TB, got error, wantMessage string) {
 	t.Helper()
 	if got == nil {
