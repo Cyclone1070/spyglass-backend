@@ -4,10 +4,10 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestFetchCardContent(t *testing.T) {
@@ -80,8 +80,8 @@ func TestFetchCardContent(t *testing.T) {
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
-			} else if !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("\ngot:\n%q\nwant:\n%q", got, testCase.want)
+			} else if diff := cmp.Diff(testCase.want, got); diff != "" {
+				t.Errorf("FetchCardContent() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
