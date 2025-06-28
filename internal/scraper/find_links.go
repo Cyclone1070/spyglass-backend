@@ -1,6 +1,8 @@
 package scraper
 
 import (
+	"strconv"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
@@ -42,11 +44,19 @@ func FindLinks(url string) ([]Link, error) {
 
 // helper function to scrape links from a category html element
 func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, links *[]Link) {
-	category.DOM.NextFiltered("ul").Find("li.starred strong a").Each(func(_ int, e *goquery.Selection) {
+	category.DOM.NextFiltered("ul").Find("li.starred a").Each(func(_ int, e *goquery.Selection) {
+		// skip if the link text is an integer (mirror links)
+		if isInteger(e.Text()) {
+			return
+		}
 		linkName := e.Text()
 		linkURL, exists := e.Attr("href")
 		if exists {
 			*links = append(*links, Link{linkName, linkURL, categoryName})
 		}
 	})
+}
+func isInteger(s string) bool {
+	_, err := strconv.Atoi(s)
+	return err == nil
 }
