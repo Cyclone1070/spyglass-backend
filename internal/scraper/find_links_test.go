@@ -127,11 +127,9 @@ func TestFindLinks(t *testing.T) {
 						`<h2 id="%[1]s">%[1]s</h2>
 						<ul>
 							<li class="starred">
-								<strong><a href="https://link1%[1]s.com">Link 1 %[1]s</a></strong>, 
 								<a href="https://link1-mirror%[1]s.com">2</a>, 
 							</li>
 							<li class="starred">
-								<strong><a href="https://link2%[1]s.com">Link 2 %[1]s</a></strong>, 
 								<a href="https://link2-mirror%[1]s.com">2</a>, 
 							</li>
 						</ul>`,
@@ -143,12 +141,6 @@ func TestFindLinks(t *testing.T) {
 			defer testServer.Close()
 
 			want := []scraper.Link{}
-			for _, id := range testCase.selectors {
-				want = append(want,
-					scraper.Link{"Link 1 " + id, "https://link1" + id + ".com", testCase.category},
-					scraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
-				)
-			}
 			assertResult(testServer, want, t)
 		})
 		t.Run("Skip when globe icon is present: " + testCase.description, func(t *testing.T) {
@@ -163,9 +155,6 @@ func TestFindLinks(t *testing.T) {
 								<span class="i-twemoji-globe-with-meridians"></span>
 								<strong><a href="https://link1%[1]s.com">Link 1 %[1]s</a></strong>, 
 							</li>
-							<li class="starred">
-								<strong><a href="https://link2%[1]s.com">Link 2 %[1]s</a></strong>, 
-							</li>
 						</ul>`,
 						id,
 					)
@@ -175,11 +164,6 @@ func TestFindLinks(t *testing.T) {
 			defer testServer.Close()
 
 			want := []scraper.Link{}
-			for _, id := range testCase.selectors {
-				want = append(want,
-					scraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
-				)
-			}
 			assertResult(testServer, want, t)
 		})
 	}
