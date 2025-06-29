@@ -2,10 +2,13 @@ package scraper
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
+
+var SkipKeywords = []string{"wiki", "github"}
 
 func FindLinks(url string) ([]Link, error) {
 	collector := colly.NewCollector()
@@ -56,6 +59,11 @@ func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, li
 		linkName := e.Text()
 		linkURL, exists := e.Attr("href")
 		if exists {
+			for _, keyword := range SkipKeywords {
+				if strings.Contains(linkURL, keyword) {
+					return // skip links containing skip keywords
+				}
+			}
 			*links = append(*links, Link{linkName, linkURL, categoryName})
 		}
 	})
