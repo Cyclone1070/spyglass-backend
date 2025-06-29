@@ -150,7 +150,7 @@ func TestFindLinks(t *testing.T) {
 						<ul>
 							<li class="starred">
 								<span class="i-twemoji-globe-with-meridians"></span>
-								<strong><a href="https://link1%[1]s.com">Link to skip%[1]s</a></strong>, 
+								<strong><a href="https://link1%[1]s.com">Link to skip %[1]s</a></strong>, 
 							</li>
 						</ul>`,
 						id,
@@ -173,7 +173,12 @@ func TestFindLinks(t *testing.T) {
 							`<h2 id="%[1]s">%[1]s</h2>
 							<ul>
 								<li class="starred">
-									<a href="https://%[2]s%[1]s.com">Link to skip%[1]s</a>, 
+									<a href="https://%[2]s%[1]s.com">Keyword in link URL %[1]s</a>, 
+									<a href="https://%[1]s.com">Keyword in link text %[2]s%[1]s</a>, 
+								</li>
+								<li class="starred">
+									<a href="https://%[1]s.com">Keyword in link description %[1]s</a>, 
+									- %[2]s%[1]s
 								</li>
 							</ul>`,
 							id, skipKeyword,
