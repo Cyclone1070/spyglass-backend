@@ -77,7 +77,7 @@ func TestFindLinks(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		t.Run("Scrape all links inside and outside strong tags: "+testCase.description, func(t *testing.T) {
+		t.Run("Scrape all links inside and outside strong tags: " + testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
 				for _, id := range testCase.selectors {
@@ -87,6 +87,9 @@ func TestFindLinks(t *testing.T) {
 						<ul>
 							<li class="starred">
 								<strong><a href="https://link1-strong%[1]s.com">Link 1 strong %[1]s</a></strong>, 
+								- Test
+							</li>
+							<li> 
 								<a href="https://link1%[1]s.com">Link 1 %[1]s</a>, 
 								- Test
 							</li>
@@ -115,7 +118,7 @@ func TestFindLinks(t *testing.T) {
 
 			assertResult(testServer, want, t)
 		})
-		t.Run("Skip when links titles are number (mirrors): "+testCase.description, func(t *testing.T) {
+		t.Run("Skip when links titles are number (mirrors): " + testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
 				for _, id := range testCase.selectors {
@@ -143,6 +146,37 @@ func TestFindLinks(t *testing.T) {
 			for _, id := range testCase.selectors {
 				want = append(want,
 					scraper.Link{"Link 1 " + id, "https://link1" + id + ".com", testCase.category},
+					scraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
+				)
+			}
+			assertResult(testServer, want, t)
+		})
+		t.Run("Skip when globe icon is present: " + testCase.description, func(t *testing.T) {
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				io.WriteString(w, "<html><body>")
+				for _, id := range testCase.selectors {
+					fmt.Fprintf(
+						w,
+						`<h2 id="%[1]s">%[1]s</h2>
+						<ul>
+							<li class="starred">
+								<span class="i-twemoji-globe-with-meridians"></span>
+								<strong><a href="https://link1%[1]s.com">Link 1 %[1]s</a></strong>, 
+							</li>
+							<li class="starred">
+								<strong><a href="https://link2%[1]s.com">Link 2 %[1]s</a></strong>, 
+							</li>
+						</ul>`,
+						id,
+					)
+				}
+				io.WriteString(w, "</body></html>")
+			}))
+			defer testServer.Close()
+
+			want := []scraper.Link{}
+			for _, id := range testCase.selectors {
+				want = append(want,
 					scraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
 				)
 			}

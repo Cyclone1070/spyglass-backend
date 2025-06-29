@@ -11,10 +11,10 @@ func FindLinks(url string) ([]Link, error) {
 	collector := colly.NewCollector()
 	var err error
 	links := []Link{}
-	categories := []struct{
-		name string
+	categories := []struct {
+		name     string
 		selector string
-	} {
+	}{
 		{"Books", "#ebooks, #public-domain, #pdf-search"},
 		{"Movies", "#streaming-sites, #free-w-ads, #anime-streaming"},
 		{"Games Download", "#download-games"},
@@ -44,9 +44,13 @@ func FindLinks(url string) ([]Link, error) {
 
 // helper function to scrape links from a category html element
 func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, links *[]Link) {
-	category.DOM.NextFiltered("ul").Find("li.starred a").Each(func(_ int, e *goquery.Selection) {
+	category.DOM.NextFiltered("ul").Find("li a").Each(func(_ int, e *goquery.Selection) {
 		// skip if the link text is an integer (mirror links)
 		if isInteger(e.Text()) {
+			return
+		}
+		// skip if globe icon is present
+		if e.Closest("li").Find(".i-twemoji-globe-with-meridians").Length() > 0 {
 			return
 		}
 		linkName := e.Text()
@@ -56,6 +60,7 @@ func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, li
 		}
 	})
 }
+
 func isInteger(s string) bool {
 	_, err := strconv.Atoi(s)
 	return err == nil
