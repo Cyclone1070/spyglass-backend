@@ -121,18 +121,15 @@ func TestFindLinks(t *testing.T) {
 		t.Run("Skip when links titles are number (mirrors): "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
-				for _, id := range testCase.selectors {
-					fmt.Fprintf(
-						w,
-						`<h2 id="%[1]s">%[1]s</h2>
-						<ul>
-							<li class="starred">
-								<a href="https://link1-mirror%[1]s.com">2</a>, 
-							</li>
-						</ul>`,
-						id,
-					)
-				}
+				io.WriteString(
+					w,
+					`<h2 id="ebooks">Skip mirror</h2>
+					<ul>
+						<li class="starred">
+							<a href="https://link1-mirror.com">2</a>, 
+						</li>
+					</ul>`,
+				)
 				io.WriteString(w, "</body></html>")
 			}))
 			defer testServer.Close()
@@ -143,19 +140,16 @@ func TestFindLinks(t *testing.T) {
 		t.Run("Skip when globe icon is present: "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
-				for _, id := range testCase.selectors {
-					fmt.Fprintf(
-						w,
-						`<h2 id="%[1]s">%[1]s</h2>
-						<ul>
-							<li class="starred">
-								<span class="i-twemoji-globe-with-meridians"></span>
-								<strong><a href="https://link1%[1]s.com">Link to skip %[1]s</a></strong>, 
-							</li>
-						</ul>`,
-						id,
-					)
-				}
+				io.WriteString(
+					w,
+					`<h2 id="ebooks">Skip globe</h2>
+					<ul>
+						<li class="starred">
+							<span class="i-twemoji-globe-with-meridians"></span>
+							<strong><a href="https://link1.com">Link to skip</a></strong>, 
+						</li>
+					</ul>`,
+				)
 				io.WriteString(w, "</body></html>")
 			}))
 			defer testServer.Close()
@@ -166,24 +160,22 @@ func TestFindLinks(t *testing.T) {
 		t.Run("Skip when link contains skip keywords: "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
-				for _, id := range testCase.selectors {
-					for _, skipKeyword := range scraper.SkipKeywords {
-						fmt.Fprintf(
-							w,
-							`<h2 id="%[1]s">%[1]s</h2>
-							<ul>
-								<li class="starred">
-									<a href="https://%[2]s%[1]s.com">Keyword in link URL %[1]s</a>, 
-									<a href="https://%[1]s.com">Keyword in link text %[2]s%[1]s</a>, 
-								</li>
-								<li class="starred">
-									<a href="https://%[1]s.com">Keyword in link description %[1]s</a>, 
-									- %[2]s%[1]s
-								</li>
-							</ul>`,
-							id, skipKeyword,
-						)
-					}
+				for _, skipKeyword := range scraper.SkipKeywords {
+					fmt.Fprintf(
+						w,
+						`<h2 id="ebooks">Skip links</h2>
+						<ul>
+							<li class="starred">
+								<a href="https://%[1]s.com">Keyword in link URL </a>, 
+								<a href="https://skiplink.com">Keyword in link text %[1]s</a>, 
+							</li>
+							<li class="starred">
+								<a href="https://skiplink.com">Keyword in link description </a>, 
+								- %[1]s
+							</li>
+						</ul>`,
+						skipKeyword,
+					)
 				}
 				io.WriteString(w, "</body></html>")
 			}))
