@@ -11,14 +11,14 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-type FindLinksTestCase struct {
+type FindWebsiteLinksTestCase struct {
 	description string
 	selectors   []string
 	category    string
 }
 
-func TestFindLinks(t *testing.T) {
-	testCases := []FindLinksTestCase{
+func TestFindWebsiteLinks(t *testing.T) {
+	testCases := []FindWebsiteLinksTestCase{
 		{
 			"list of ebooks category",
 			[]string{"ebooks", "public-domain", "pdf-search"},
@@ -106,17 +106,17 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []linkscraper.Link{}
+			want := []linkscraper.WebsiteLink{}
 			for _, id := range testCase.selectors {
 				want = append(want,
-					linkscraper.Link{"Link 1 strong " + id, "https://link1-strong" + id + ".com", testCase.category},
-					linkscraper.Link{"Link 1 " + id, "https://link1" + id + ".com", testCase.category},
-					linkscraper.Link{"Link 2 strong " + id, "https://link2-strong" + id + ".com", testCase.category},
-					linkscraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
+					linkscraper.WebsiteLink{"Link 1 strong " + id, "https://link1-strong" + id + ".com", testCase.category},
+					linkscraper.WebsiteLink{"Link 1 " + id, "https://link1" + id + ".com", testCase.category},
+					linkscraper.WebsiteLink{"Link 2 strong " + id, "https://link2-strong" + id + ".com", testCase.category},
+					linkscraper.WebsiteLink{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
 				)
 			}
 
-			assertResult(testServer, want, t)
+			assertFindWebsiteLinkResult(testServer, want, t)
 		})
 		t.Run("Skip when links titles are number (mirrors): "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -134,8 +134,8 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []linkscraper.Link{}
-			assertResult(testServer, want, t)
+			want := []linkscraper.WebsiteLink{}
+			assertFindWebsiteLinkResult(testServer, want, t)
 		})
 		t.Run("Skip when globe icon is present: "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -154,8 +154,8 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []linkscraper.Link{}
-			assertResult(testServer, want, t)
+			want := []linkscraper.WebsiteLink{}
+			assertFindWebsiteLinkResult(testServer, want, t)
 		})
 		t.Run("Skip when link contains skip keywords: "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,18 +181,17 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []linkscraper.Link{}
-			assertResult(testServer, want, t)
+			want := []linkscraper.WebsiteLink{}
+			assertFindWebsiteLinkResult(testServer, want, t)
 		})
 	}
 }
 
-func assertResult(testServer *httptest.Server, want []linkscraper.Link, t *testing.T) {
-	got, err := linkscraper.FindLinks(testServer.URL)
+func assertFindWebsiteLinkResult(testServer *httptest.Server, want []linkscraper.WebsiteLink, t *testing.T) {
+	t.Helper()
+	got, _ := linkscraper.FindWebsiteLinks(testServer.URL)
 
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	} else if diff := cmp.Diff(want, got); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("FindLinks() mismatch (-want +got):\n%s", diff)
 	}
 }
