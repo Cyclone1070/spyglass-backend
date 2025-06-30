@@ -191,6 +191,11 @@ func assertFindWebsiteLinkResult(testServer *httptest.Server, want []linkscraper
 	t.Helper()
 	got, _ := linkscraper.FindWebsiteLinks(testServer.URL)
 
+	assertEqual(want, got, t)
+}
+
+func assertEqual(want, got any, t *testing.T) {
+	t.Helper()
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("FindLinks() mismatch (-want +got):\n%s", diff)
 	}
