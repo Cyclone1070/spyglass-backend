@@ -1,4 +1,4 @@
-package scraper_test
+package cardscraper_test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
+	"github.com/Cyclone1070/spyglass-backend/internal/cardscraper"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -85,7 +85,7 @@ func TestFindCardPath(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			got, err := scraper.FindCardPath(testServer.URL, "example test")
+			got, err := cardscraper.FindCardPath(testServer.URL, "example test")
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
@@ -114,7 +114,7 @@ func TestFindCardPathParsingErrors(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			_, got := scraper.FindCardPath(testServer.URL, "test")
+			_, got := cardscraper.FindCardPath(testServer.URL, "test")
 
 			assertError(t, got, wantMessage)
 		})

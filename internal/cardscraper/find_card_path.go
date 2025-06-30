@@ -1,5 +1,5 @@
-// Package scraper contains helper functions to scrape various kinds of data
-package scraper
+// Package cardscraper contains helper functions to scrape various kinds of data
+package cardscraper
 
 import (
 	"errors"

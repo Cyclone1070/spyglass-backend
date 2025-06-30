@@ -1,4 +1,4 @@
-package scraper_test
+package cardscraper_test
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
+	"github.com/Cyclone1070/spyglass-backend/internal/cardscraper"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -17,7 +17,7 @@ func TestFetchCardContent(t *testing.T) {
 		bottom      string
 		cardPath    string
 		otherText   []string
-		want        []scraper.CardContent
+		want        []cardscraper.CardContent
 	}
 	testCases := []TestCase{
 		{
@@ -25,7 +25,7 @@ func TestFetchCardContent(t *testing.T) {
 			top:         "<div class='card'>",
 			bottom:      "</div>",
 			cardPath:    "html > body > div.container > div.card",
-			want: []scraper.CardContent{
+			want: []cardscraper.CardContent{
 				{Title: "Example", URL: "https://example.com", OtherText: []string{}},
 				{Title: "Example 2", URL: "https://example.com/2", OtherText: []string{}},
 				{Title: "Test", URL: "https://test.com", OtherText: []string{}},
@@ -41,7 +41,7 @@ func TestFetchCardContent(t *testing.T) {
 				"<p>Other Text 2</p><p>Other Text 3</p>",
 				"<p>Other Text Test</p>",
 			},
-			want: []scraper.CardContent{
+			want: []cardscraper.CardContent{
 				{Title: "Example", URL: "https://example.com", OtherText: []string{"Other Text"}},
 				{Title: "Example 2", URL: "https://example.com/2", OtherText: []string{"Other Text 2", "Other Text 3"}},
 				{Title: "Test", URL: "https://test.com", OtherText: []string{"Other Text Test"}},
@@ -76,7 +76,7 @@ func TestFetchCardContent(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			got, err := scraper.FetchCardContent(testServer.URL, testCase.cardPath, "example test")
+			got, err := cardscraper.FetchCardContent(testServer.URL, testCase.cardPath, "example test")
 
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
