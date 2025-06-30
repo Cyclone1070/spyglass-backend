@@ -13,7 +13,11 @@ func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 	searchLinks := []SearchLink{}
 	var err error
 
-	collector.OnHTML("form:has(input[type=search], input[type=text])", func(e *colly.HTMLElement) {
+	collector.OnHTML("form[action]:has(input[type=search], input[type=text])", func(e *colly.HTMLElement) {
+		method := e.Attr("method")
+		if method != "get" {
+			return
+		}
 		action := e.Attr("action")
 		searchURL := e.Request.AbsoluteURL(action)
 		inputElement := e.DOM.Find("input[type=search], input[type=text]")

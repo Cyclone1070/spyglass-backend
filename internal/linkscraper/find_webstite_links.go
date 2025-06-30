@@ -2,6 +2,7 @@
 package linkscraper
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-var SkipKeywords = []string{"wiki", "github", "FOSS", "guide"}
+var SkipKeywords = []string{"wiki", "github", "FOSS", "guide", "CSE", "reddit"}
 
 // FindWebsiteLinks returns a list of links from the given URL, categorised by type,
 // excluding links that contain certain keywords or are not relevant.
@@ -40,7 +41,7 @@ func FindWebsiteLinks(url string) ([]WebsiteLink, error) {
 	}
 
 	collector.OnError(func(r *colly.Response, e error) {
-		err = e
+		err = errors.New("error visiting link: " + url + " - " + e.Error())
 	})
 
 	collector.Visit(url)

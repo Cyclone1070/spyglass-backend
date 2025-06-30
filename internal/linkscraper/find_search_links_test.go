@@ -30,9 +30,15 @@ func TestFindSearchLinks(t *testing.T) {
 			got, _ := linkscraper.FindSearchLinks(linkscraper.WebsiteLink{"test title", testServer.URL, "test category"})
 			assertEqual(want, got, t)
 		})
-		t.Run("return error when the link does not have a search form", func(t *testing.T) {
+		t.Run("return error when the link does not have a valid get request search form", func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
+				io.WriteString(
+					w,
+					`<form action="/search" method="post">
+						<input name="q" type="text"/>
+					</form>`,
+				)
 				io.WriteString(w, "</body></html>")
 			}))
 			defer testServer.Close()
