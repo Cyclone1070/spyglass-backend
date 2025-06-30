@@ -11,12 +11,12 @@ import (
 
 var SkipKeywords = []string{"wiki", "github", "FOSS", "guide"}
 
-// FindLinks returns a list of links from the given URL, categorised by type,
+// FindWebsiteLinks returns a list of links from the given URL, categorised by type,
 // excluding links that contain certain keywords or are not relevant.
-func FindLinks(url string) ([]Link, error) {
+func FindWebsiteLinks(url string) ([]WebsiteLink, error) {
 	collector := colly.NewCollector()
 	var err error
-	links := []Link{}
+	links := []WebsiteLink{}
 	categories := []struct {
 		name     string
 		selector string
@@ -49,7 +49,7 @@ func FindLinks(url string) ([]Link, error) {
 }
 
 // helper function to scrape links from a category html element
-func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, links *[]Link) {
+func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, links *[]WebsiteLink) {
 	category.DOM.NextFiltered("ul").Find("li a").Each(func(_ int, e *goquery.Selection) {
 		// skip if the link text is an integer (mirror links)
 		if isInteger(e.Text()) {
@@ -70,7 +70,7 @@ func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, li
 					return
 				}
 			}
-			*links = append(*links, Link{linkName, linkURL, categoryName})
+			*links = append(*links, WebsiteLink{linkName, linkURL, categoryName})
 		}
 	})
 }
