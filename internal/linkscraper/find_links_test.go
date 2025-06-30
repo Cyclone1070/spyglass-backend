@@ -1,4 +1,4 @@
-package scraper_test
+package linkscraper_test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Cyclone1070/spyglass-backend/internal/scraper"
+	"github.com/Cyclone1070/spyglass-backend/internal/linkscraper"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -106,13 +106,13 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []scraper.Link{}
+			want := []linkscraper.Link{}
 			for _, id := range testCase.selectors {
 				want = append(want,
-					scraper.Link{"Link 1 strong " + id, "https://link1-strong" + id + ".com", testCase.category},
-					scraper.Link{"Link 1 " + id, "https://link1" + id + ".com", testCase.category},
-					scraper.Link{"Link 2 strong " + id, "https://link2-strong" + id + ".com", testCase.category},
-					scraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
+					linkscraper.Link{"Link 1 strong " + id, "https://link1-strong" + id + ".com", testCase.category},
+					linkscraper.Link{"Link 1 " + id, "https://link1" + id + ".com", testCase.category},
+					linkscraper.Link{"Link 2 strong " + id, "https://link2-strong" + id + ".com", testCase.category},
+					linkscraper.Link{"Link 2 " + id, "https://link2" + id + ".com", testCase.category},
 				)
 			}
 
@@ -134,7 +134,7 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []scraper.Link{}
+			want := []linkscraper.Link{}
 			assertResult(testServer, want, t)
 		})
 		t.Run("Skip when globe icon is present: "+testCase.description, func(t *testing.T) {
@@ -154,13 +154,13 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []scraper.Link{}
+			want := []linkscraper.Link{}
 			assertResult(testServer, want, t)
 		})
 		t.Run("Skip when link contains skip keywords: "+testCase.description, func(t *testing.T) {
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "<html><body>")
-				for _, skipKeyword := range scraper.SkipKeywords {
+				for _, skipKeyword := range linkscraper.SkipKeywords {
 					fmt.Fprintf(
 						w,
 						`<h2 id="ebooks">Skip links</h2>
@@ -181,14 +181,14 @@ func TestFindLinks(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			want := []scraper.Link{}
+			want := []linkscraper.Link{}
 			assertResult(testServer, want, t)
 		})
 	}
 }
 
-func assertResult(testServer *httptest.Server, want []scraper.Link, t *testing.T) {
-	got, err := scraper.FindLinks(testServer.URL)
+func assertResult(testServer *httptest.Server, want []linkscraper.Link, t *testing.T) {
+	got, err := linkscraper.FindLinks(testServer.URL)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

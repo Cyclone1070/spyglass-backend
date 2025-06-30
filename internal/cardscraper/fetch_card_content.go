@@ -1,4 +1,4 @@
-package scraper
+package cardscraper
 
 import (
 	"github.com/PuerkitoBio/goquery"

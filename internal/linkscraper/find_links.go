@@ -1,4 +1,5 @@
-package scraper
+// Package linkscraper provides functionality to scrape links from fmhy urls
+package linkscraper
 
 import (
 	"strconv"
@@ -10,6 +11,8 @@ import (
 
 var SkipKeywords = []string{"wiki", "github", "FOSS", "guide"}
 
+// FindLinks returns a list of links from the given URL, categorised by type,
+// excluding links that contain certain keywords or are not relevant.
 func FindLinks(url string) ([]Link, error) {
 	collector := colly.NewCollector()
 	var err error
