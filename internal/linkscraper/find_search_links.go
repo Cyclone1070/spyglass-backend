@@ -11,7 +11,7 @@ func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 	// Check if the link has a search form.
 	collector := colly.NewCollector()
 	searchLinks := []SearchLink{}
-	
+
 	collector.OnHTML("form:has(input[type=search], input[type=text])", func(e *colly.HTMLElement) {
 		action := e.Attr("action")
 		searchURL := e.Request.AbsoluteURL(action)
@@ -23,9 +23,11 @@ func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 	})
 
 	collector.Visit(link.URL)
-	if len(searchLinks) > 0 {
+	if len(searchLinks) == 1 {
 		return searchLinks[0], nil
+	} else if len(searchLinks) > 1 {
+		return SearchLink{}, errors.New("multiple search URLs found")
+	} else {
+		return SearchLink{}, errors.New("no search URL found")
 	}
-	return SearchLink{}, errors.New("no search URL found")
-	
 }
