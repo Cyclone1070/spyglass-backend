@@ -67,5 +67,26 @@ func TestFindSearchLinks(t *testing.T) {
 				assertEqual(want.Error(), err.Error(), t)
 			}
 		})
+		t.Run("return error when search form has multiple valid input elements", func(t *testing.T) {
+			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				io.WriteString(w, "<html><body>")
+				io.WriteString(
+					w,
+					`<form action="/search" method="get">
+						<input name="q1" type="search"/>
+						<input name="q2" type="text"/>
+					</form>`,
+				)
+				io.WriteString(w, "</body></html>")
+			}))
+			defer testServer.Close()
+			want := errors.New("multiple potential search params found in link: " + testServer.URL)
+			_, err := linkscraper.FindSearchLinks(linkscraper.WebsiteLink{"test title", testServer.URL, "test category"})
+			if err == nil {
+				t.Fatalf("expected error %q, got no error", want)
+			} else {
+				assertEqual(want.Error(), err.Error(), t)
+			}
+		})
 	}
 }
