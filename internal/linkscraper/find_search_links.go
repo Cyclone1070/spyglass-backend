@@ -1,12 +1,15 @@
 package linkscraper
 
-import "github.com/gocolly/colly/v2"
+import (
+	"errors"
+
+	"github.com/gocolly/colly/v2"
+)
 
 // FindSearchLinks extracts search URLs from a given link.
 func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 	// Check if the link has a search form.
 	collector := colly.NewCollector()
-	var err error
 	searchLinks := []SearchLink{}
 	
 	collector.OnHTML("form:has(input[type=search], input[type=text])", func(e *colly.HTMLElement) {
@@ -21,8 +24,8 @@ func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 
 	collector.Visit(link.URL)
 	if len(searchLinks) > 0 {
-		return searchLinks[0], err
+		return searchLinks[0], nil
 	}
-	return SearchLink{}, nil
+	return SearchLink{}, errors.New("no search URL found")
 	
 }
