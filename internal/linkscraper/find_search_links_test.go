@@ -48,7 +48,7 @@ func TestFindSearchLinks(t *testing.T) {
 			io.WriteString(w, "</body></html>")
 		}))
 		defer testServer.Close()
-		want := errors.New("no search URL found in link: " + testServer.URL)
+		want := errors.New("no get request search URL found in link: " + testServer.URL)
 		_, err := linkscraper.FindSearchLinks(linkscraper.WebsiteLink{"test title", testServer.URL, "test category"})
 		if err == nil {
 			t.Fatalf("expected error %q, got no error", want)
