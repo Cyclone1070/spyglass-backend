@@ -44,6 +44,6 @@ func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 	} else if len(searchLinks) > 1 {
 		return SearchLink{}, errors.New("multiple search URLs found in link: " + link.URL)
 	} else {
-		return SearchLink{}, errors.New("no search URL found in link: " + link.URL)
+		return SearchLink{}, errors.New("no get request search URL found in link: " + link.URL)
 	}
 }
