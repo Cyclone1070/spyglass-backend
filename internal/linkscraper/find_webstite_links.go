@@ -10,7 +10,7 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-var SkipKeywords = []string{"wiki", "github", "FOSS", "guide", "CSE", "reddit"}
+var SkipKeywords = []string{"wiki", "github", "FOSS", "guide", "CSE", "reddit", "t.me", "mozilla"}
 
 // FindWebsiteLinks returns a list of links from the given URL, categorised by type,
 // excluding links that contain certain keywords or are not relevant.
@@ -51,7 +51,7 @@ func FindWebsiteLinks(url string) ([]WebsiteLink, error) {
 
 // helper function to scrape links from a category html element
 func scrapeLinkFromCategory(category *colly.HTMLElement, categoryName string, links *[]WebsiteLink) {
-	category.DOM.NextFiltered("ul").Find("li a").Each(func(_ int, e *goquery.Selection) {
+	category.DOM.NextAllFiltered("ul").First().Find("li a").Each(func(_ int, e *goquery.Selection) {
 		// skip if the link text is an integer (mirror links)
 		if isInteger(e.Text()) {
 			return

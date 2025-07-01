@@ -84,6 +84,7 @@ func TestFindWebsiteLinks(t *testing.T) {
 					fmt.Fprintf(
 						w,
 						`<h2 id="%[1]s">%[1]s</h2>
+						<div></div>
 						<ul>
 							<li class="starred">
 								<strong><a href="https://link1-strong%[1]s.com">Link 1 strong %[1]s</a></strong>, 

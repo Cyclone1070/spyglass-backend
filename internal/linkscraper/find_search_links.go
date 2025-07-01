@@ -2,6 +2,7 @@ package linkscraper
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -15,7 +16,7 @@ func FindSearchLinks(link WebsiteLink) (SearchLink, error) {
 
 	collector.OnHTML("form[action]:has(input[type=search], input[type=text])", func(e *colly.HTMLElement) {
 		method := e.Attr("method")
-		if method != "get" {
+		if strings.ToLower(method) == "post" || strings.ToLower(method) == "dialog" {
 			return
 		}
 		action := e.Attr("action")
