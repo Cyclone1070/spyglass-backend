@@ -1,13 +1,13 @@
 package linkscraper
 
 type WebsiteLink struct {
-	Title string
-	URL   string
+	Title    string
+	URL      string
 	Category string
+	Starred  bool
 }
-type SearchLink struct {
-	Title string
-	URL   string
-	Category string
-	QueryParamName string
+type SearchInput struct {
+	WebsiteLink
+	InputSelector string
+	Method        string
 }

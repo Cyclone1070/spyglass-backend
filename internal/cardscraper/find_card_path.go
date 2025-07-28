@@ -11,6 +11,7 @@ import (
 
 func FindCardPath(url string, query string) (string, error) {
 	collector := colly.NewCollector()
+	collector.UserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15"
 	var err error
 	// map of card paths to their number of ocurrences
 	cardPaths := make(map[string]int)
