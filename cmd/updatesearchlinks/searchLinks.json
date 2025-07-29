@@ -1,0 +1,1052 @@
+[
+    {
+        "Title": "Nix",
+        "URL": "https://nixos.org/",
+        "Category": "Windows Software",
+        "Starred": false,
+        "SearchURL": "https://search.nixos.org/packages?query=%s"
+    },
+    {
+        "Title": "Haxmac",
+        "URL": "https://haxmac.cc/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://haxmac.cc/?s=%s"
+    },
+    {
+        "Title": "Mac Torrents",
+        "URL": "https://www.torrentmac.net/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://www.torrentmac.net/?s=%s"
+    },
+    {
+        "Title": "pkgx",
+        "URL": "https://pkgx.sh/",
+        "Category": "Windows Software",
+        "Starred": false,
+        "SearchURL": "https://github.com/pkgxdev/pkgx?query-builder-test=%s"
+    },
+    {
+        "Title": "Flathub",
+        "URL": "https://flathub.org/",
+        "Category": "Windows Software",
+        "Starred": false,
+        "SearchURL": "https://flathub.org/apps/search?q=%s"
+    },
+    {
+        "Title": "Lutris",
+        "URL": "https://lutris.net/",
+        "Category": "Linux Games",
+        "Starred": true,
+        "SearchURL": "https://lutris.net/games?q=%s"
+    },
+    {
+        "Title": "Comprehensive Gaming Guide",
+        "URL": "https://linux-gaming.kwindu.eu/index.php?title=Main_Page",
+        "Category": "Linux Games",
+        "Starred": true,
+        "SearchURL": "https://linux-gaming.kwindu.eu/index.php?search=%s"
+    },
+    {
+        "Title": "WebCatalog",
+        "URL": "https://webcatalog.io/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://webcatalog.io/en/search?q=%s"
+    },
+    {
+        "Title": "MacKed",
+        "URL": "https://macked.app/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://macked.app/?s=%s"
+    },
+    {
+        "Title": "⁠MacintoshRepository",
+        "URL": "https://www.macintoshrepository.org/games/",
+        "Category": "Mac Games",
+        "Starred": false,
+        "SearchURL": "https://www.macintoshrepository.org/games/software_search.php?s=%s"
+    },
+    {
+        "Title": "Search",
+        "URL": "https://games.melroy.org/",
+        "Category": "Linux Games",
+        "Starred": true,
+        "SearchURL": "https://games.melroy.org/?search=%s"
+    },
+    {
+        "Title": "Mac App Store",
+        "URL": "https://macappstre.com/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://macappstre.com?s=%s"
+    },
+    {
+        "Title": "Online Fix",
+        "URL": "https://online-fix.me/",
+        "Category": "Games Download",
+        "Starred": true,
+        "SearchURL": "https://online-fix.me/index.php?story=%s"
+    },
+    {
+        "Title": "Ova Games",
+        "URL": "https://www.ovagames.com/",
+        "Category": "Games Download",
+        "Starred": true,
+        "SearchURL": "https://www.ovagames.com/?s=%s"
+    },
+    {
+        "Title": "cheat.sh",
+        "URL": "http://cheat.sh/",
+        "Category": "Windows Software",
+        "Starred": false,
+        "SearchURL": "http://cheat.sh/?topic=%s"
+    },
+    {
+        "Title": "⁠MacintoshRepository",
+        "URL": "https://www.macintoshrepository.org/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://www.macintoshrepository.org/software_search.php?s=%s"
+    },
+    {
+        "Title": "Reloaded Steam",
+        "URL": "https://reloadedsteam.com/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://reloadedsteam.com/?s=%s"
+    },
+    {
+        "Title": "ThriftMac",
+        "URL": "https://thriftmac.com/",
+        "Category": "Mac Software",
+        "Starred": false,
+        "SearchURL": "https://www.thriftmac.com/search/?q=%s"
+    },
+    {
+        "Title": "g4u",
+        "URL": "https://g4u.to/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://g4u.to/en/search/?str=%s"
+    },
+    {
+        "Title": "Old-Games.com",
+        "URL": "https://www.old-games.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.old-games.com/search/?s=%s"
+    },
+    {
+        "Title": "GamePCFull",
+        "URL": "https://gamepcfull.com/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://gamepcfull.com/?s=%s"
+    },
+    {
+        "Title": "AtopGames",
+        "URL": "https://atopgames.com/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://atopgames.com/?s=%s"
+    },
+    {
+        "Title": "IRC Games",
+        "URL": "https://redd.it/x804wg",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://www.reddit.com/search/?q=%s"
+    },
+    {
+        "Title": "Gamesdrive",
+        "URL": "https://gamesdrive.net/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://gamesdrive.net/?s=%s"
+    },
+    {
+        "Title": "DOS Games Archive",
+        "URL": "https://www.dosgamesarchive.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.dosgamesarchive.com/games?t=%s"
+    },
+    {
+        "Title": "SteamGG",
+        "URL": "https://steamgg.net/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://steamgg.net/?s=%s"
+    },
+    {
+        "Title": "FreeDOSGames",
+        "URL": "https://www.freedosgames.de/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.freedosgames.de/component/finder/search?Itemid=101\u0026q=%s"
+    },
+    {
+        "Title": "World of PC Games",
+        "URL": "https://worldofpcgames.com/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://worldofpcgames.com/?s=%s"
+    },
+    {
+        "Title": "Games4U",
+        "URL": "https://games4u.org/",
+        "Category": "Games Download",
+        "Starred": false,
+        "SearchURL": "https://games4u.org?s=%s"
+    },
+    {
+        "Title": "Old-Games",
+        "URL": "https://www.old-games.ru/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.old-games.ru/catalog/?gamename=%s"
+    },
+    {
+        "Title": "CollectionChamber",
+        "URL": "https://collectionchamber.blogspot.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://collectionchamber.blogspot.com/search?q=%s"
+    },
+    {
+        "Title": "CrocDB",
+        "URL": "https://crocdb.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://crocdb.net/search/?title=%s"
+    },
+    {
+        "Title": "DOS HAVEN",
+        "URL": "https://www.doshaven.eu/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.doshaven.eu/?s=%s"
+    },
+    {
+        "Title": "Best Old Games",
+        "URL": "https://www.bestoldgames.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.bestoldgames.net/search.php?q=%s"
+    },
+    {
+        "Title": "⁠ROMHack Plaza",
+        "URL": "https://romhackplaza.org/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://romhackplaza.org/?s=%s"
+    },
+    {
+        "Title": "ROMsFun",
+        "URL": "https://romsfun.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://romsfun.com/?s=%s"
+    },
+    {
+        "Title": "ROMhacking",
+        "URL": "https://www.romhacking.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://www.google.com/search?q=%s"
+    },
+    {
+        "Title": "Japanese PC Compendium",
+        "URL": "https://japanesepccompendium.blogspot.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://japanesepccompendium.blogspot.com/search?q=%s"
+    },
+    {
+        "Title": "Zophar's Domain",
+        "URL": "https://www.zophar.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.zophar.net/search?search=%s"
+    },
+    {
+        "Title": "BlueRoms",
+        "URL": "https://www.blueroms.ws/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.blueroms.ws/search?q=%s"
+    },
+    {
+        "Title": "Generation MSX",
+        "URL": "https://www.generation-msx.nl/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.generation-msx.nl/search/result?q=%s"
+    },
+    {
+        "Title": "GamesNostalgia",
+        "URL": "https://gamesnostalgia.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://gamesnostalgia.com/search?q=%s"
+    },
+    {
+        "Title": "Retrostic",
+        "URL": "https://www.retrostic.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.retrostic.com/search?search_term_string=%s"
+    },
+    {
+        "Title": "ROMsPURE",
+        "URL": "https://ROMspure.cc/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://ROMspure.cc/?s=%s"
+    },
+    {
+        "Title": "SpectrumComputing",
+        "URL": "https://spectrumcomputing.co.uk/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://spectrumcomputing.co.uk/list?text=%s"
+    },
+    {
+        "Title": "RetroGameTalk",
+        "URL": "https://retrogametalk.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://retrogametalk.com/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "WowROMs",
+        "URL": "https://wowroms.com/en",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://wowroms.com/en/roms/list?search=%s"
+    },
+    {
+        "Title": "ROMs For MAME",
+        "URL": "https://www.romsformame.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.romsformame.com/index.php?q=%s"
+    },
+    {
+        "Title": "ConsoleROMs",
+        "URL": "https://www.consoleROMs.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.consoleROMs.com/search?search_term_string=%s"
+    },
+    {
+        "Title": "ROMsGames",
+        "URL": "https://www.romsgames.net/roms/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.romsgames.net/search/?q=%s"
+    },
+    {
+        "Title": "Emu-Land",
+        "URL": "https://www.emu-land.net/en",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.emu-land.net/en/search_games?q=%s"
+    },
+    {
+        "Title": "Abandonware DOS",
+        "URL": "https://www.abandonwaredos.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.abandonwaredos.com/search-redir.php?sr=%s"
+    },
+    {
+        "Title": "Emulator Games",
+        "URL": "https://www.emulatorgames.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.emulatorgames.net/search/?kw=%s"
+    },
+    {
+        "Title": "Romspedia",
+        "URL": "https://www.romspedia.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.romspedia.com/search?search_term_string=%s"
+    },
+    {
+        "Title": "Wad Archive",
+        "URL": "https://archive.org/details/wadarchive",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://archive.org/search?query=%s"
+    },
+    {
+        "Title": "JNUSTool",
+        "URL": "https://gbatemp.net/threads/jnustool-nusgrabber-and-cdecrypt-combined.413179/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://gbatemp.net/threads/jnustool-nusgrabber-and-cdecrypt-combined.413179/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "NswRom",
+        "URL": "https://nswrom.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://nswrom.com/?s=%s"
+    },
+    {
+        "Title": "SwitchROM",
+        "URL": "https://switchrom.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://switchrom.net?s=%s"
+    },
+    {
+        "Title": "Super Mario Bros Crossover",
+        "URL": "https://archive.org/details/SuperMarioCrossoverOffline",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://archive.org/search?query=%s"
+    },
+    {
+        "Title": "RetroZone",
+        "URL": "https://retrozone.co/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://retrozone.co/forums/articles/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "MFGG",
+        "URL": "https://mfgg.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://mfgg.net/index.php?search=%s\u0026sess=ab45d614c2a47c59f50e88569a08f32a"
+    },
+    {
+        "Title": "⁠SMB Arena",
+        "URL": "https://www.smbarena.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.smbarena.com/search?t=%s"
+    },
+    {
+        "Title": "SuperPSX",
+        "URL": "https://www.superpsx.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.superpsx.com/?s=%s"
+    },
+    {
+        "Title": "NXBrew",
+        "URL": "https://nxbrew.net/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://nxbrew.net/?s=%s"
+    },
+    {
+        "Title": "Ziperto",
+        "URL": "https://ziperto.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://www.ziperto.com/?s=%s"
+    },
+    {
+        "Title": "Motion Support Bypass",
+        "URL": "https://redd.it/gobcne",
+        "Category": "Linux Games",
+        "Starred": false,
+        "SearchURL": "https://www.reddit.com/search/?q=%s"
+    },
+    {
+        "Title": "SwitchROM.io",
+        "URL": "https://switchrom.io/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://switchroms.io?s=%s"
+    },
+    {
+        "Title": "3DS ROMS",
+        "URL": "https://3dsroms.org",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://3dsroms.org/?s=%s"
+    },
+    {
+        "Title": "⁠Mario Party Legacy",
+        "URL": "https://mariopartylegacy.com/forum/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://mariopartylegacy.com/forum/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "ROMSLAB",
+        "URL": "https://romslab.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": false,
+        "SearchURL": "https://romslab.com/?s=%s"
+    },
+    {
+        "Title": "Motion Support Bypass",
+        "URL": "https://redd.it/gobcne",
+        "Category": "Mac Games",
+        "Starred": false,
+        "SearchURL": "https://www.reddit.com/search/?q=%s"
+    },
+    {
+        "Title": "PCSX-Redux",
+        "URL": "https://pcsx-redux.consoledev.net",
+        "Category": "Linux Games",
+        "Starred": false,
+        "SearchURL": "https://pcsx-redux.consoledev.net?query=%s"
+    },
+    {
+        "Title": "PCSX-Redux",
+        "URL": "https://pcsx-redux.consoledev.net",
+        "Category": "Mac Games",
+        "Starred": false,
+        "SearchURL": "https://pcsx-redux.consoledev.net?query=%s"
+    },
+    {
+        "Title": "CineGo",
+        "URL": "https://cinego.co/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://cinego.co/search/?q=%s"
+    },
+    {
+        "Title": "RetroSystemRevival",
+        "URL": "https://retrosystemsrevival.blogspot.com/",
+        "Category": "Windows Software",
+        "Starred": false,
+        "SearchURL": "https://retrosystemsrevival.blogspot.com/search?q=%s"
+    },
+    {
+        "Title": "PSVitaVPK",
+        "URL": "https://psvitavpk.com/",
+        "Category": "Abandonware/ROM",
+        "Starred": true,
+        "SearchURL": "https://psvitavpk.com/?s=%s"
+    },
+    {
+        "Title": "AlternativeTo",
+        "URL": "https://alternativeto.net/",
+        "Category": "Windows Software",
+        "Starred": true,
+        "SearchURL": "https://alternativeto.net/browse/search?q=%s"
+    },
+    {
+        "Title": "Softlay",
+        "URL": "https://www.softlay.com/downloads/",
+        "Category": "Windows Software",
+        "Starred": false,
+        "SearchURL": "https://www.softlay.com/downloads?s=%s"
+    },
+    {
+        "Title": "Mobilism",
+        "URL": "https://forum.mobilism.org/",
+        "Category": "Windows Software",
+        "Starred": true,
+        "SearchURL": "https://forum.mobilism.org/search.php?keywords=%s"
+    },
+    {
+        "Title": "Freevee",
+        "URL": "https://www.amazon.com/gp/video/storefront/?ie=UTF8\u0026contentId=freetv",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://www.amazon.com/s/ref=nb_sb_noss?field-keywords=%s"
+    },
+    {
+        "Title": "AniGo",
+        "URL": "https://anigo.to/",
+        "Category": "Movies",
+        "Starred": true,
+        "SearchURL": "https://anigo.to/browser?keyword=%s"
+    },
+    {
+        "Title": "MovieXFilm",
+        "URL": "https://moviexfilm.com/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://moviexfilm.com/?s=%s"
+    },
+    {
+        "Title": "Cinegram",
+        "URL": "https://cinegram.net/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://cinegram.net/index.php?query=%s"
+    },
+    {
+        "Title": "PrimeWire",
+        "URL": "https://www.primewire.mov/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://www.primewire.mov/filter?s=%s"
+    },
+    {
+        "Title": "OpenCulture",
+        "URL": "https://www.openculture.com/freemoviesonline",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://google.com/search?q=%s"
+    },
+    {
+        "Title": "MoviesFoundOnline",
+        "URL": "https://moviesfoundonline.com/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://moviesfoundonline.com?s=%s"
+    },
+    {
+        "Title": "AnimeKai",
+        "URL": "https://animekai.to/",
+        "Category": "Movies",
+        "Starred": true,
+        "SearchURL": "https://animekai.to/browser?keyword=%s"
+    },
+    {
+        "Title": "AnimeNoSub",
+        "URL": "https://animenosub.to/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://animenosub.to/?s=%s"
+    },
+    {
+        "Title": "LiteAPKs",
+        "URL": "https://liteapks.com/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://liteapks.com?s=%s"
+    },
+    {
+        "Title": "MyAnime",
+        "URL": "https://myanime.live/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://myanime.live/?s=%s"
+    },
+    {
+        "Title": "AnimeKhor",
+        "URL": "https://animekhor.org/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://animekhor.org/?s=%s"
+    },
+    {
+        "Title": "123anime",
+        "URL": "https://123animes.ru/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://w1.123animes.ru/search?keyword=%s"
+    },
+    {
+        "Title": "LMANIME",
+        "URL": "https://lmanime.com/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://lmanime.com/?s=%s"
+    },
+    {
+        "Title": "App",
+        "URL": "https://liteapks.com/app.html",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://liteapks.com?s=%s"
+    },
+    {
+        "Title": "APKSum",
+        "URL": "https://www.apksum.com/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://www.apksum.com/search?q=%s"
+    },
+    {
+        "Title": "CKSub",
+        "URL": "https://cksub.org/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://cksub.org/?s=%s"
+    },
+    {
+        "Title": "AnimeOnsen",
+        "URL": "https://animeonsen.xyz/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://www.animeonsen.xyz/search?q=%s"
+    },
+    {
+        "Title": "APK4Free",
+        "URL": "https://apk4free.net/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://apk4free.net?s=%s"
+    },
+    {
+        "Title": "App",
+        "URL": "https://pdalife.com/pdalife-app-android-a40597.html",
+        "Category": "Android apps",
+        "Starred": true,
+        "SearchURL": "https://pdalife.com/pdalife-app-android-a40597.html?search=%s"
+    },
+    {
+        "Title": "APKVision",
+        "URL": "https://apkvision.org/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://apkvision.org/?s=%s"
+    },
+    {
+        "Title": "Mobilism",
+        "URL": "https://forum.mobilism.org/viewforum.php?f=398",
+        "Category": "Android apps",
+        "Starred": true,
+        "SearchURL": "https://forum.mobilism.org/search.php?keywords=%s\u0026sid=f1a6b46bac7362bcbcd82d27f274c580"
+    },
+    {
+        "Title": "Games",
+        "URL": "https://pdalife.com/ios/games",
+        "Category": "IOS apps",
+        "Starred": true,
+        "SearchURL": "https://pdalife.com/ios/games/?search=%s"
+    },
+    {
+        "Title": "Modyolo",
+        "URL": "https://modyolo.com/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://modyolo.com?s=%s"
+    },
+    {
+        "Title": "Apps",
+        "URL": "https://pdalife.com/ios/programmy/",
+        "Category": "IOS apps",
+        "Starred": true,
+        "SearchURL": "https://pdalife.com/ios/programmy/?search=%s"
+    },
+    {
+        "Title": "Crimson Subs",
+        "URL": "https://crimsonfansubs.com/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://crimsonfansubs.com/?s=%s"
+    },
+    {
+        "Title": "PDALife",
+        "URL": "https://pdalife.com/",
+        "Category": "Android apps",
+        "Starred": true,
+        "SearchURL": "https://pdalife.com/?search=%s"
+    },
+    {
+        "Title": "Aninow",
+        "URL": "https://aninow.tv/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://aninow.tv/browse?search=%s"
+    },
+    {
+        "Title": "AnimeXin",
+        "URL": "https://animexin.dev/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://animexin.dev/?s=%s"
+    },
+    {
+        "Title": "IPALibrary",
+        "URL": "https://ipalibrary.me/",
+        "Category": "IOS apps",
+        "Starred": true,
+        "SearchURL": "https://ipalibrary.me/?s=%s"
+    },
+    {
+        "Title": "Android1",
+        "URL": "https://an1.com/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://an1.com?story=%s"
+    },
+    {
+        "Title": "iOSVizor",
+        "URL": "https://iosvizor.com/",
+        "Category": "IOS apps",
+        "Starred": false,
+        "SearchURL": "https://iosvizor.com/?s=%s"
+    },
+    {
+        "Title": "Mobilism",
+        "URL": "https://forum.mobilism.org",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://forum.mobilism.org/search.php?keywords=%s"
+    },
+    {
+        "Title": "PlatinMods",
+        "URL": "https://platinmods.com/",
+        "Category": "Android apps",
+        "Starred": true,
+        "SearchURL": "https://platinmods.com/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "AndroPalace",
+        "URL": "https://www.andropalace.org/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://www.andropalace.org?s=%s"
+    },
+    {
+        "Title": "PlatinMods",
+        "URL": "https://platinmods.com/",
+        "Category": "IOS apps",
+        "Starred": false,
+        "SearchURL": "https://platinmods.com/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "Lucifer Donghua",
+        "URL": "https://luciferdonghua.in/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://luciferdonghua.in/?s=%s"
+    },
+    {
+        "Title": "APKPure",
+        "URL": "https://apkpure.net/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://apkpure.net/search?q=%s"
+    },
+    {
+        "Title": "APKMirror",
+        "URL": "https://www.apkmirror.com/",
+        "Category": "Android apps",
+        "Starred": true,
+        "SearchURL": "https://www.apkmirror.com/?s=%s"
+    },
+    {
+        "Title": "Z-Library",
+        "URL": "https://z-lib.gd/",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://z-lib.gd/s/?q=%s"
+    },
+    {
+        "Title": "Anna's Archive",
+        "URL": "https://annas-archive.org/",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://annas-archive.org/search?q=%s"
+    },
+    {
+        "Title": "AndroidRepublic",
+        "URL": "https://androidrepublic.org/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://androidrepublic.org/portal/?_xfClientLoadTime=%s"
+    },
+    {
+        "Title": "mIRC",
+        "URL": "https://redd.it/znprct",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://www.reddit.com/search/?q=%s"
+    },
+    {
+        "Title": "eBookBB",
+        "URL": "https://ebookbb.in/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://ebookbb.in/?s=%s"
+    },
+    {
+        "Title": "BookSee",
+        "URL": "https://en.booksee.org/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://en.booksee.org/s/?q=%s"
+    },
+    {
+        "Title": "AllBooksWorld",
+        "URL": "https://allbooksworld.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://allbooksworld.com/?s=%s"
+    },
+    {
+        "Title": "Project Gutenberg",
+        "URL": "https://www.gutenberg.org/",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://www.gutenberg.org/ebooks/search/?query=%s"
+    },
+    {
+        "Title": "farsroid",
+        "URL": "https://www.farsroid.com/",
+        "Category": "Android apps",
+        "Starred": false,
+        "SearchURL": "https://www.farsroid.com?s=%s"
+    },
+    {
+        "Title": "eBookHunter",
+        "URL": "https://ebook-hunter.org/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://ebook-hunter.org/search?keyword=%s"
+    },
+    {
+        "Title": "JustFreeBooks",
+        "URL": "https://www.justfreebooks.info/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://www.justfreebooks.info/results.php?q=%s"
+    },
+    {
+        "Title": "DPLA",
+        "URL": "https://dp.la/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://dp.la/search?q=%s"
+    },
+    {
+        "Title": "Planet Publish",
+        "URL": "https://www.planetpublish.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://www.planetpublish.com/?s=%s"
+    },
+    {
+        "Title": "⁠By the Fireplace",
+        "URL": "https://bythefireplace.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://bythefireplace.com/listings-half-screen-map-list.html?keyword=%s"
+    },
+    {
+        "Title": "iBookPile",
+        "URL": "https://ibookpile.in/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://ibookpile.in/?s=%s"
+    },
+    {
+        "Title": "Nordic",
+        "URL": "https://runeberg.org/",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://runeberg.org/search.pl?q=%s"
+    },
+    {
+        "Title": "Open Library",
+        "URL": "https://openlibrary.org/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://openlibrary.org/search?q=%s"
+    },
+    {
+        "Title": "⁠ReadOnlineFreeBook",
+        "URL": "https://readonlinefreebook.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://readonlinefreebook.com/index/search?q=%s"
+    },
+    {
+        "Title": "Ebook PDF",
+        "URL": "https://ebookpdf.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://ebookpdf.com/download.php?search=%s"
+    },
+    {
+        "Title": "PublicDomainReview",
+        "URL": "https://publicdomainreview.org/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://publicdomainreview.org/search?q=%s"
+    },
+    {
+        "Title": "Lit2Go",
+        "URL": "https://etc.usf.edu/lit2go/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://etc.usf.edu/lit2go/search/?q=%s"
+    },
+    {
+        "Title": "BAEN",
+        "URL": "https://www.baen.com/catalog/category/view/s/free-library/id/2012",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://www.baen.com/allbooks?q=%s"
+    },
+    {
+        "Title": "PDF Drive",
+        "URL": "https://www.pdfdrive.com/",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://www.pdfdrive.com/search?q=%s"
+    },
+    {
+        "Title": "Page by Page Books",
+        "URL": "https://www.pagebypagebooks.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "http://www.google.com/cse?q=%s"
+    },
+    {
+        "Title": "iDoc",
+        "URL": "https://idoc.tips/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://idoc.tips/search?s=%s"
+    },
+    {
+        "Title": "iOSObscura",
+        "URL": "https://archive.org/details/iOSObscura",
+        "Category": "IOS apps",
+        "Starred": false,
+        "SearchURL": "https://archive.org/search?query=%s"
+    },
+    {
+        "Title": "Unglue.it",
+        "URL": "https://unglue.it/",
+        "Category": "Books",
+        "Starred": true,
+        "SearchURL": "https://unglue.it/search/?q=%s"
+    },
+    {
+        "Title": "pdfroom",
+        "URL": "https://pdfroom.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://pdfroom.com/search?query=%s"
+    },
+    {
+        "Title": "ePDF",
+        "URL": "https://epdf.tips/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://epdf.tips/search?s=%s"
+    },
+    {
+        "Title": "Classic Literature",
+        "URL": "https://classic-literature.co.uk/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://classic-literature.co.uk/?s=%s"
+    },
+    {
+        "Title": "PDFCookie",
+        "URL": "https://pdfcookie.com/",
+        "Category": "Books",
+        "Starred": false,
+        "SearchURL": "https://pdfcookie.com/search?q=%s"
+    },
+    {
+        "Title": "AniHQ",
+        "URL": "https://anihq.to/",
+        "Category": "Movies",
+        "Starred": false,
+        "SearchURL": "https://anihq.to/search?s_keyword=%s"
+    }
+]
