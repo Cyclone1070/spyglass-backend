@@ -10,12 +10,9 @@ import (
 )
 
 func main() {
-	// cardSelector, err := cardscraper.FindResultCardSelector(masterCollector, "https://www.ovagames.com/?s=%s")
-	// if err != nil {
-	// 	println("Error finding result card selector:", err.Error())
-	// 	return
-	// }
-	// println("Found result card selector:", cardSelector)
+	// high level settings
+	maxConcurrency := 50
+	// other setup
 	fmhyLinks := []string{
 		"https://fmhy.net/readingpiracyguide",
 		"https://fmhy.net/videopiracyguide",
@@ -25,33 +22,35 @@ func main() {
 		"https://fmhy.net/android-iosguide",
 	}
 	websiteLinks := []linkscraper.WebsiteLink{}
-	var websiteLinkWg sync.WaitGroup
-	var websiteLinkMu sync.Mutex
-	println("Scraping links from fmhy...")
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	pool := make(chan struct{}, maxConcurrency)
+
 	for _, link := range fmhyLinks {
-		websiteLinkWg.Add(1)
+		wg.Add(1)
+		pool <- struct{}{}
 		go func(link string) {
-			defer websiteLinkWg.Done()
+			defer func() { <-pool }()
+			defer wg.Done()
 			links, err := linkscraper.FindWebsiteLinks(link)
 			if err != nil {
 				return
 			}
-			websiteLinkMu.Lock()
+			mu.Lock()
 			websiteLinks = append(websiteLinks, links...)
-			websiteLinkMu.Unlock()
+			mu.Unlock()
 		}(link)
 	}
-	websiteLinkWg.Wait()
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+	wg.Wait()
+
 	searchURL := []linkscraper.SearchLink{}
 	validCounts := make(map[string]int)
 	invalidCounts := make(map[string]int)
 	processedCount := 0
 	totalLinks := len(websiteLinks)
-	maxConcurrency := 20
-	pool := make(chan struct{}, maxConcurrency)
 	println("Processing links...")
+
 	for _, link := range websiteLinks {
 		wg.Add(1)
 		pool <- struct{}{}
@@ -76,7 +75,7 @@ func main() {
 	wg.Wait()
 	fmt.Println()
 
-	file, err := os.Create("searchURL.json")
+	file, err := os.Create("searchLinks.json")
 	if err != nil {
 		println("Error creating JSON file:", err.Error())
 		return
@@ -90,7 +89,7 @@ func main() {
 		return
 	}
 
-	println("Scraping completed. Results saved to results.json")
+	println("Scraping completed. Results saved to searchLinks.json")
 	println("\nLink Status by Category:")
 	allCategories := make(map[string]struct{})
 	for category := range validCounts {
