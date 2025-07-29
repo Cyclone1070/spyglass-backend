@@ -1,4 +1,6 @@
-// Package linkscraper provides functionality to find search URL patterns on websites.
+// Package linkscraper provides functionality to scrape and discover website links.
+// It includes tools for extracting categorized links from curated lists (like those on fmhy.net)
+// and for automatically finding a website's search functionality.
 package linkscraper
 
 import (
@@ -14,17 +16,26 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-// --- Primary Data Structures ---
-
+// SearchLink extends a WebsiteLink with the specific URL template for
+// that site's search functionality. This is the final output of the
+// discovery process.
 type SearchLink struct {
 	WebsiteLink
-	SearchURL string // The final URL template, e.g., "https://site.com/search?q=%s"
+	// SearchURL is a printf-style format string for the site's search endpoint.
+	// It contains a single "%s" which should be replaced with the URL-encoded query.
+	// Example: "https://example.com/search?q=%s"
+	SearchURL string
 }
 
-// --- Browser-Free Finder Function ---
-
 // FindSearchLink discovers the direct GET request URL for a website's search functionality.
-// It uses gocolly for a single HTTP request and reuses the scoring logic to find the best form.
+// It operates in several phases:
+// 1. Fetches the page content using a configured gocolly collector.
+// 2. Filters all `<form>` elements to find ones that are likely for search.
+// 3. Narrows the selection to forms using the GET method.
+// 4. Further filters for forms containing exactly one text or search input field.
+// 5. Uses a sophisticated scoring engine (`chooseBestSearchInput`) to select the best candidate.
+// 6. Constructs the final search URL template, preserving any existing query parameters.
+// This entire process is browser-free and relies on static analysis of the HTML.
 func FindSearchLink(link WebsiteLink) (SearchLink, error) {
 	c := utils.ConfiguredCollector()
 
@@ -41,7 +52,7 @@ func FindSearchLink(link WebsiteLink) (SearchLink, error) {
 		// --- Phase 1: Filter for likely search forms ---
 		searchForms := e.DOM.Find("form").FilterFunction(isLikelySearchForm)
 
-		// --- Phase 2: Apply the new "GET request only" constraint ---
+		// --- Phase 2: Apply the "GET request only" constraint ---
 		getForms := searchForms.FilterFunction(func(i int, s *goquery.Selection) bool {
 			method, _ := s.Attr("method")
 			// An absent method attribute defaults to "GET", so we include it.
@@ -127,16 +138,22 @@ func FindSearchLink(link WebsiteLink) (SearchLink, error) {
 	return result, nil
 }
 
-// --- Helper Functions (Unchanged from previous version) ---
-
+// nonSearchKeywords is a regex used to filter out forms that are clearly not
+// for site search, such as login, registration, or newsletter signup forms.
 var nonSearchKeywords = regexp.MustCompile(
 	`login|log in|sign ?in|username|password|register|sign ?up|subscribe|newsletter|contact|comment|forgot|e-mail|email`,
 )
 
+// isLikelySearchForm is a goquery filter function that returns true if a form
+// is a potential candidate for being a search form. It filters out forms with
+// password fields or textareas and checks surrounding text for non-search keywords.
 func isLikelySearchForm(i int, s *goquery.Selection) bool {
+	// Rule 1: A search form should not contain password fields or textareas.
 	if s.Find(`input[type="password"], textarea`).Length() > 0 {
 		return false
 	}
+	// Rule 2: Check the text content of headings and buttons within the form.
+	// If it contains keywords related to login, subscribe, etc., it's not a search form.
 	var formTextBuilder strings.Builder
 	s.Find("h1, h2, h3, button, a[role='button'], input[type='submit']").Each(func(_ int, el *goquery.Selection) {
 		formTextBuilder.WriteString(el.Text())
@@ -145,12 +162,16 @@ func isLikelySearchForm(i int, s *goquery.Selection) bool {
 	return !nonSearchKeywords.MatchString(strings.ToLower(formTextBuilder.String()))
 }
 
+// chooseBestSearchInput implements the scoring engine to select the most likely
+// search input from a list of candidates. It assigns scores based on a variety
+// of weighted signals, such as HTML attributes (type, role, name), location in
+// the DOM (header, nav), and associated button text or icons.
 func chooseBestSearchInput(candidates []*goquery.Selection, sourceURL string) (*goquery.Selection, error) {
 	if len(candidates) == 0 {
 		return nil, fmt.Errorf("no valid form with a single search input was found on: %s", sourceURL)
 	}
 	if len(candidates) == 1 {
-		return candidates[0], nil
+		return candidates[0], nil // No need to score if there's only one choice.
 	}
 
 	type searchCandidate struct {
@@ -168,6 +189,8 @@ func chooseBestSearchInput(candidates []*goquery.Selection, sourceURL string) (*
 		form := sel.Closest("form")
 		var reasons []string
 		var positiveSignals int
+		// --- Scoring Logic ---
+		// Positive signals
 		if inputType, _ := sel.Attr("type"); inputType == "search" {
 			scoredCandidates[i].score += 100
 			reasons = append(reasons, "+100 (Base:type='search')")
@@ -208,16 +231,17 @@ func chooseBestSearchInput(candidates []*goquery.Selection, sourceURL string) (*
 				scoredCandidates[i].score += 50
 				reasons = append(reasons, "+50 (adj. btn text)")
 				positiveSignals++
-				return false
+				return false // Stop searching once found.
 			}
 			if class, ok := btn.Attr("class"); ok && searchIconRegex.MatchString(class) {
 				scoredCandidates[i].score += 50
 				reasons = append(reasons, "+50 (adj. btn icon)")
 				positiveSignals++
-				return false
+				return false // Stop searching once found.
 			}
 			return true
 		})
+		// Negative signals
 		if sel.Closest("footer").Length() > 0 {
 			scoredCandidates[i].score -= 200
 			reasons = append(reasons, "-200 (in <footer>)")
@@ -226,12 +250,14 @@ func chooseBestSearchInput(candidates []*goquery.Selection, sourceURL string) (*
 			scoredCandidates[i].score -= 100
 			reasons = append(reasons, "-100 (in sidebar)")
 		}
+		// Certainty bonus for multiple strong signals
 		if positiveSignals >= 3 {
 			scoredCandidates[i].score += 50
 			reasons = append(reasons, "+50 (Certainty Bonus)")
 		}
 		scoredCandidates[i].reasoning = strings.Join(reasons, ", ")
 	}
+	// --- Selection Logic ---
 	var viableCandidates []searchCandidate
 	for _, c := range scoredCandidates {
 		if c.score > 0 {
@@ -247,6 +273,7 @@ func chooseBestSearchInput(candidates []*goquery.Selection, sourceURL string) (*
 	sort.Slice(viableCandidates, func(i, j int) bool {
 		return viableCandidates[i].score > viableCandidates[j].score
 	})
+	// Check for ambiguity: if the top two scores are too close, it's safer to fail.
 	if (viableCandidates[0].score - viableCandidates[1].score) < 20 {
 		return nil, fmt.Errorf("multiple inputs have very close scores (Top: %d, Next: %d), unable to resolve ambiguity on: %s", viableCandidates[0].score, viableCandidates[1].score, sourceURL)
 	}

@@ -1,4 +1,4 @@
-// Package utils provide utilities functions
+// Package utils provides shared utility functions for the scraping infrastructure.
 package utils
 
 import (
@@ -8,6 +8,19 @@ import (
 	"github.com/gocolly/colly/v2/extensions"
 )
 
+// ConfiguredCollector creates and returns a new `colly.Collector` with a robust
+// and common configuration designed to mimic a real web browser, helping to avoid
+// common bot-detection systems.
+//
+// The configuration includes:
+//   - A 10-second request timeout.
+//   - A randomized delay (1-3 seconds) between requests to the same domain to simulate human browsing speed.
+//   - A randomized User-Agent string for each request.
+//   - Automatic setting of the "Referer" header.
+//   - A comprehensive set of static headers that mimic a modern Chrome browser on macOS.
+//
+// This function serves as a centralized constructor for all scrapers in the project,
+// ensuring consistent and reliable behavior.
 func ConfiguredCollector() *colly.Collector {
 	// Create a new collector with the default configuration
 	collector := colly.NewCollector()

@@ -5,6 +5,14 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
+// FetchCardContent scrapes a given URL and extracts structured data from elements
+// that match the provided CSS selector (`cardPath`). For each matched element, it extracts
+// the title, the URL from the first anchor tag, and a collection of other text fragments.
+//
+// The function is designed to gather all meaningful text content from a "result card"
+// by finding all leaf nodes within the card, extracting their text, and filtering out
+// empty or redundant content (like the title text, which is handled separately).
+// This provides a rich, unstructured collection of data associated with the primary link.
 func FetchCardContent(url string, cardPath string, query string) ([]CardContent, error) {
 	var cardContents = []CardContent{}
 	var err error
