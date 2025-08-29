@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "KkhAG6ZPxyptX++gk91sTntBy5fXPonO7MBAq+SwO9M=",
+  "Source": "spyglass-backend",
+  "BasePath": "_content/spyglass-backend",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
