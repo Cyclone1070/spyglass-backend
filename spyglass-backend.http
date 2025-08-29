@@ -1,0 +1,6 @@
+@spyglass_backend_HostAddress = http://localhost:5250
+
+GET {{spyglass_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
