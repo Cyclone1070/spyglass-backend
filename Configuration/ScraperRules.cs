@@ -16,7 +16,6 @@ public record CategoryRule
 
 public record CardFindingQueries
 {
-	public required string ValidQuery { get; set; }
 	public required string InvalidQuery { get; set; }
-	public required Dictionary<string, string> SpecialisedQueries { get; set; }
+	public required Dictionary<string, string[]> ValidQueries { get; set; }
 }
