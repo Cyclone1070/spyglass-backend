@@ -17,6 +17,7 @@ builder.Services.Configure<ScraperRules>(builder.Configuration);
 // Add custom services
 builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
+builder.Services.AddSingleton<ResultCardSelectorService>();
 
 var app = builder.Build();
 

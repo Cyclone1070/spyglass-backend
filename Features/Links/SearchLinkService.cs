@@ -66,9 +66,9 @@ public partial class SearchLinkService(
 			var absoluteActionUri = new Uri(new Uri(link.Url), actionUrl);
 			var uriBuilder = new UriBuilder(absoluteActionUri)
 			{
-				Query = string.Format("{0}={1}", Uri.EscapeDataString(inputName), "%s")
+				// This creates a query string template like "q={0}"
+				Query = $"{Uri.EscapeDataString(inputName)}={{0}}"
 			};
-
 			var searchUrlTemplate = uriBuilder.ToString();
 
 			_logger.LogInformation("Found search link for {Title}: {Url}", link.Title, searchUrlTemplate);
