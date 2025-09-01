@@ -15,5 +15,4 @@ public record SearchLink : WebsiteLink
 public record Link : SearchLink
 {
 	public required string Selector { get; set; }
-	public required float ResponseTime { get; set; }
 }

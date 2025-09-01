@@ -7,11 +7,13 @@ namespace spyglass_backend.Features.Links;
 public class LinkController(
 	ILogger<LinkController> logger,
 	WebsiteLinkService websiteLinkService,
-	SearchLinkService searchLinkService) : ControllerBase
+	SearchLinkService searchLinkService,
+	ResultCardSelectorService resultCardSelectorService) : ControllerBase
 {
 	private readonly ILogger<LinkController> _logger = logger;
 	private readonly WebsiteLinkService _websiteLinkService = websiteLinkService;
 	private readonly SearchLinkService _searchLinkService = searchLinkService;
+	private readonly ResultCardSelectorService _resultCardSelectorService = resultCardSelectorService;
 
 	[HttpGet]
 	public async Task<IActionResult> GetLinks([FromQuery] string Url)
@@ -23,17 +25,43 @@ public class LinkController(
 
 		try
 		{
-			var links = await _websiteLinkService.ScrapeWebsiteLinksAsync(Url);
-			if (links == null || !links.Any())
+			var websiteLinks = await _websiteLinkService.ScrapeWebsiteLinksAsync(Url);
+			if (websiteLinks == null || !websiteLinks.Any())
 			{
 				return NotFound("No links found on the specified URL.");
 			}
-			var searchLink = await _searchLinkService.ScrapeSearchLinksAsync(links.First());
-			if (searchLink == null)
+			var processingTasks = websiteLinks.Select(async websiteLink =>
 			{
-				return NotFound("No search link found on the specified URL.");
+				if (websiteLink.Url != "https://ebookbb.in/") { return null; }
+				try
+				{
+					// The entire two-step process for a single link is encapsulated here.
+					var searchLink = await _searchLinkService.ScrapeSearchLinksAsync(websiteLink);
+					if (searchLink == null)
+					{
+						// This link couldn't be processed into a SearchLink, so skip it.
+						return null;
+					}
+
+					var finalLink = await _resultCardSelectorService.FindResultCardSelectorAsync(searchLink);
+					return finalLink;
+				}
+				catch (Exception ex)
+				{
+					// Log the error for the specific link that failed.
+					_logger.LogWarning(ex, "Failed to process link: {Url}", websiteLink.Url);
+
+					// Return null for this failed task so Task.WhenAll doesn't fail.
+					return null;
+				}
+			});
+			var results = await Task.WhenAll(processingTasks);
+			var validLinks = results.Where(link => link != null).ToList();
+			if (validLinks.Count == 0)
+			{
+				return NotFound("None of the links could be processed successfully.");
 			}
-			return Ok(new { Links = links, SearchLink = searchLink });
+			return Ok(validLinks);
 		}
 		catch (Exception ex)
 		{
