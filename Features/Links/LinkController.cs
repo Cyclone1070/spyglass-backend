@@ -32,7 +32,6 @@ public class LinkController(
 			}
 			var processingTasks = websiteLinks.Select(async websiteLink =>
 			{
-				if (websiteLink.Url != "https://ebookbb.in/") { return null; }
 				try
 				{
 					// The entire two-step process for a single link is encapsulated here.
@@ -61,7 +60,7 @@ public class LinkController(
 			{
 				return NotFound("None of the links could be processed successfully.");
 			}
-			return Ok(validLinks);
+			return Ok(new { ValidCount = validLinks.Count, Total = websiteLinks.Count(), Links = validLinks });
 		}
 		catch (Exception ex)
 		{

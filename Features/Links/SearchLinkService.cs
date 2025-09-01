@@ -243,14 +243,6 @@ public partial class SearchLinkService(
 			return validCandidates.First().Selection;
 		}
 
-		// Check for ambiguity between the top two *valid* candidates.
-		var topValidScore = validCandidates[0].Score;
-		var nextValidScore = validCandidates[1].Score;
-		if ((topValidScore - nextValidScore) < 10) // Your original code used a threshold of 10, I've used 20 from the Go code. Adjust as needed.
-		{
-			throw new InvalidOperationException($"Multiple valid inputs have very close scores (Top: {topValidScore}, Next: {nextValidScore}), unable to resolve ambiguity on: {sourceUrl}");
-		}
-
 		// Return the highest-scoring valid candidate.
 		return validCandidates[0].Selection;
 	}

@@ -53,10 +53,9 @@
 		{ "Name": "iOS", "Selector": "#ios-ipas" }
 	],
 	"CardFindingQueries": {
-		"ValidQuery": "the",
 		"InvalidQuery": "asdfghjklqwerty12345",
-		"SpecialisedQueries": {
-			"Books": "murder"
+		"ValidQueries": {
+			"Books": ["murder", "love"]
 		}
 	}
 }
