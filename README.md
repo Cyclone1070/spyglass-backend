@@ -1,6 +1,6 @@
-# A C# search engine for internet freebies
+# C# search engine for internet freebies
 
-## From public domain books to Abandonware/ROMs, all sourced from reputable websites.
+From public domain books to Abandonware/ROMs, all sourced from reputable websites.
 
 Spyglass Backend is a C# application that serves as the backend for the Spyglass search engine. It scrapes search results from a community-maintained list of reputable websites. Visit [fmhy.net](fmhy.net) for more information.
 
