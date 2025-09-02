@@ -16,16 +16,7 @@ public class ResultCardSelectorService(
 	private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 	private readonly CardFindingQueries _queries = rules.Value.CardFindingQueries;
 
-	// A private record to cleanly hold information about a discovered repeating pattern.
-	private record ElementSelector(string Parent, string Element)
-	{
-		public override string ToString() => $"{Parent} > {Element}";
-	};
-	private record RepeatingPattern(string Parent, List<IElement> Elements, int Count) { }
-
-	/// <summary>
-	/// Main entry point. Orchestrates the two-tiered scraping strategy.
-	/// </summary>
+	// Main entry point. Orchestrates the two-tiered scraping strategy.
 	public async Task<Link> FindResultCardSelectorAsync(SearchLink searchLink)
 	{
 		var noResultsUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_queries.InvalidQuery));
@@ -37,7 +28,7 @@ public class ResultCardSelectorService(
 				? query
 				: ["the", "of"]; // Fallback query if none defined for category
 
-			_logger.LogInformation("Attempting scrape with SPECIALISED query for category '{Category}'.", searchLink.Category);
+			_logger.LogInformation("Attempting differential scraping for category '{Category}'.", searchLink.Category);
 			// Find the repeating pattern, do it twice to get a wider variety of cards in case some idiot fucked up their html
 			var withResultsDoc1 = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])));
 			var pattern1 = PerformDiffAnalysis(withResultsDoc1, noResultsBlacklist);
@@ -58,13 +49,7 @@ public class ResultCardSelectorService(
 		}
 	}
 
-	// =================================================================
-	// CORE LOGIC HELPERS (Bottom-Up Strategy)
-	// =================================================================
-
-	/// <summary>
-	/// Tier 1 Core Logic: Finds repeating element patterns that do NOT exist on the blacklist.
-	/// </summary>
+	// Finds repeating element patterns that do NOT exist on the blacklist.
 	private static RepeatingPattern PerformDiffAnalysis(IDocument withResultsDoc, IReadOnlySet<ElementSelector> blacklist)
 	{
 		// Filter elements to only those present in the 'diff' selector set.
@@ -89,7 +74,7 @@ public class ResultCardSelectorService(
 					{
 						var elements = validGroup.ToList(); // Iterate ONCE to create the list
 						return new RepeatingPattern(
-							Parent: BuildSelectorPart(siblingGroup.Key!),
+							Parent: BuildParentSelector(siblingGroup.Key!),
 							Elements: elements,           // Use the created list
 							Count: elements.Count         // Use the list's .Count property (instant)
 						);
@@ -146,7 +131,7 @@ public class ResultCardSelectorService(
 	private static ElementSelector GetElementSelector(IElement element)
 	{
 		// Build the selector part for the current element.
-		var elementSelector = BuildSelectorPart(element);
+		var elementSelector = BuildClassSelector(element);
 
 		// Get the parent element.
 		var parent = element.ParentElement;
@@ -158,15 +143,13 @@ public class ResultCardSelectorService(
 		}
 
 		// Build the selector part for the parent.
-		var parentSelector = BuildSelectorPart(parent);
+		var parentSelector = BuildParentSelector(parent);
 
 		// Combine them using the direct child combinator ">".
 		return new ElementSelector(parentSelector, elementSelector);
 	}
 
-	/// <summary>
-	/// Creates a generalized CSS selector for a group of elements by finding their common classes.
-	/// </summary>
+	// Creates a generalized CSS selector for a group of elements by finding their common classes.
 	private static ElementSelector GetCommonSelector(string parent, IEnumerable<IElement> elements)
 	{
 		var first = elements.First();
@@ -187,10 +170,8 @@ public class ResultCardSelectorService(
 		return new ElementSelector(parent, builder.ToString());
 	}
 
-	/// <summary>
-	/// Helper function to build a consistent "tag.class1.class2" selector for a single element.
-	/// </summary>
-	private static string BuildSelectorPart(IElement element)
+	// Helper function to build a consistent "tag.class1.class2" selector for a single element.
+	private static string BuildClassSelector(IElement element)
 	{
 		if (element == null) return string.Empty;
 
@@ -214,10 +195,21 @@ public class ResultCardSelectorService(
 		// If neither classes nor ID exist, it will just return the tag name.
 		return builder.ToString();
 	}
+	// Prioritise ID over classes
+	private static string BuildParentSelector(IElement element)
+	{
+		if (element == null) return string.Empty;
+		// Handle the priority case: if a non-empty ID exists, use it immediately.
+		if (!string.IsNullOrEmpty(element.Id))
+		{
+			return $"{element.TagName.ToLowerInvariant()}#{element.Id}";
+		}
+		// If there's no ID, fall back to the original class-based logic.
+		// This avoids repeating the class-building code.
+		return BuildClassSelector(element);
+	}
 
-	/// <summary>
-	/// Heuristically determines if an individual element is a pagination item by its content.
-	/// </summary>
+	// Heuristically determines if an individual element is a pagination item by its content.
 	private static bool IsPaginationCard(IElement element)
 	{
 		var text = element.TextContent.Trim();

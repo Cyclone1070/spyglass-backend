@@ -1,3 +1,5 @@
+using AngleSharp.Dom;
+
 namespace spyglass_backend.Features.Links;
 
 public record WebsiteLink
@@ -16,3 +18,18 @@ public record Link : SearchLink
 {
 	public required string Selector { get; set; }
 }
+
+// Records for finding card css selectors
+public record ElementSelector(string Parent, string Element)
+{
+	public override string ToString() => $"{Parent} > {Element}";
+};
+public record RepeatingPattern(string Parent, List<IElement> Elements, int Count) { }
+
+// Json serialization links storage
+public record StoredLinks(
+		int WebsiteLinksCount,
+		int SearchLinksCount,
+		int ValidLinksCount,
+		Dictionary<string, List<Link>> Links)
+{ }

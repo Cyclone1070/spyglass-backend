@@ -1,5 +1,5 @@
 {
-	"MegathreadUrl": [
+	"MegathreadUrls": [
 		"https://fmhy.net/readingpiracyguide",
 		"https://fmhy.net/videopiracyguide",
 		"https://fmhy.net/gamingpiracyguide",
@@ -37,7 +37,11 @@
 		},
 		{
 			"Name": "Movies",
-			"Selector": "#streaming-sites, #free-w-ads, #anime-streaming"
+			"Selector": "#streaming-sites, #free-w-ads, #api-frontends, #single-server"
+		},
+		{
+			"Name": "Anime",
+			"Selector": "#anime-streaming"
 		},
 		{ "Name": "Games Download", "Selector": "#download-games" },
 		{ "Name": "Games Repack", "Selector": "#repack-games" },
