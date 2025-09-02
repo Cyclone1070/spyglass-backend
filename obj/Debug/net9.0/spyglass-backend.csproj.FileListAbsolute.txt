@@ -34,3 +34,4 @@
 /Users/mac/Desktop/repos/spyglass-backend/obj/Debug/net9.0/spyglass-backend.pdb
 /Users/mac/Desktop/repos/spyglass-backend/obj/Debug/net9.0/spyglass-backend.genruntimeconfig.cache
 /Users/mac/Desktop/repos/spyglass-backend/obj/Debug/net9.0/ref/spyglass-backend.dll
+/Users/mac/Desktop/repos/spyglass-backend/bin/Debug/net9.0/links.json
