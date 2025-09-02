@@ -19,36 +19,26 @@ public class WebsiteLinkService(
 	public async Task<IEnumerable<WebsiteLink>> ScrapeWebsiteLinksAsync(string Url)
 	{
 		_logger.LogInformation("Scraping {Url}...", Url);
-		try
-		{
-			// Create an HttpClient using the factory. This is a best practice.
-			var client = _httpClientFactory.CreateClient();
-			var htmlContent = await client.GetStringAsync(Url);
+		// Create an HttpClient using the factory. This is a best practice.
+		var client = _httpClientFactory.CreateClient();
+		var htmlContent = await client.GetStringAsync(Url);
 
-			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-			var document = await context.OpenAsync(req => req.Content(htmlContent));
+		var context = BrowsingContext.New(AngleSharp.Configuration.Default);
+		var document = await context.OpenAsync(req => req.Content(htmlContent));
 
-			// Use LINQ to query the document in a declarative way.
-			// SelectMany "flattens" the results. We get a list of categories,
-			// each containing a list of links, and this turns it into one big list of links.
-			var allLinks = _rules.Categories
-				.SelectMany(category =>
-				{
-					var headerElements = document.QuerySelectorAll(category.Selector);
-					return headerElements.SelectMany(header => ScrapeLinksFromHeader(header, category.Name));
-				})
-				.ToList(); // .ToList() executes the query and creates the final list.
+		// Use LINQ to query the document in a declarative way.
+		// SelectMany "flattens" the results. We get a list of categories,
+		// each containing a list of links, and this turns it into one big list of links.
+		var allLinks = _rules.Categories
+			.SelectMany(category =>
+			{
+				var headerElements = document.QuerySelectorAll(category.Selector);
+				return headerElements.SelectMany(header => ScrapeLinksFromHeader(header, category.Name));
+			})
+			.ToList();
 
-			_logger.LogInformation("Scraping complete. Found {LinkCount} total links.", allLinks.Count);
-			return allLinks;
-		}
-		catch (HttpRequestException ex)
-		{
-			_logger.LogError(ex, "HTTP request to {Url} failed.", Url);
-			// We "re-throw" the exception to let the caller (the controller) know that
-			// something went wrong, so it can return a proper error response (e.g., HTTP 500).
-			throw;
-		}
+		_logger.LogInformation("Scraping complete. Found {LinkCount} total links.", allLinks.Count);
+		return allLinks;
 	}
 
 	// private helpers

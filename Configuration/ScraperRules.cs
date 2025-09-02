@@ -2,7 +2,7 @@ namespace spyglass_backend.Configuration;
 
 public record ScraperRules
 {
-	public required List<string> MegathreadUrl { get; set; }
+	public required List<string> MegathreadUrls { get; set; }
 	public required List<string> SkipKeywords { get; set; }
 	public required List<CategoryRule> Categories { get; set; }
 	public required CardFindingQueries CardFindingQueries { get; set; }

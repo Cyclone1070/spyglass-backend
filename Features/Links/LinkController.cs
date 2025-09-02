@@ -6,66 +6,35 @@ namespace spyglass_backend.Features.Links;
 [Route("api/[controller]")]
 public class LinkController(
 	ILogger<LinkController> logger,
-	WebsiteLinkService websiteLinkService,
-	SearchLinkService searchLinkService,
-	ResultCardSelectorService resultCardSelectorService) : ControllerBase
+	MegathreadService megathreadService,
+	LinkExportService linkExportService) : ControllerBase
 {
 	private readonly ILogger<LinkController> _logger = logger;
-	private readonly WebsiteLinkService _websiteLinkService = websiteLinkService;
-	private readonly SearchLinkService _searchLinkService = searchLinkService;
-	private readonly ResultCardSelectorService _resultCardSelectorService = resultCardSelectorService;
+	private readonly MegathreadService _megathreadService = megathreadService;
+	private readonly LinkExportService _linkExportService = linkExportService;
 
-	[HttpGet]
-	public async Task<IActionResult> GetLinks([FromQuery] string Url)
+	[HttpPost]
+	[ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> PostLinks()
 	{
-		if (string.IsNullOrWhiteSpace(Url))
-		{
-			return BadRequest("Url cannot be null or empty.");
-		}
-
+		_logger.LogInformation("Received request to scrape megathread.");
 		try
 		{
-			var websiteLinks = await _websiteLinkService.ScrapeWebsiteLinksAsync(Url);
-			if (websiteLinks == null || !websiteLinks.Any())
-			{
-				return NotFound("No links found on the specified URL.");
-			}
-			var processingTasks = websiteLinks.Select(async websiteLink =>
-			{
-				try
-				{
-					// The entire two-step process for a single link is encapsulated here.
-					var searchLink = await _searchLinkService.ScrapeSearchLinksAsync(websiteLink);
-					if (searchLink == null)
-					{
-						// This link couldn't be processed into a SearchLink, so skip it.
-						return null;
-					}
+			var processedLinks = await _megathreadService.ScrapeMegathreadAsync();
 
-					var finalLink = await _resultCardSelectorService.FindResultCardSelectorAsync(searchLink);
-					return finalLink;
-				}
-				catch (Exception ex)
-				{
-					// Log the error for the specific link that failed.
-					_logger.LogWarning(ex, "Failed to process link: {Url}", websiteLink.Url);
+			var filePath = await _linkExportService.SaveJsonFileAsync(processedLinks, "links.json");
 
-					// Return null for this failed task so Task.WhenAll doesn't fail.
-					return null;
-				}
+			return Ok(new
+			{
+				Message = "File successfully generated and saved on the server.",
+				FilePath = filePath
 			});
-			var results = await Task.WhenAll(processingTasks);
-			var validLinks = results.Where(link => link != null).ToList();
-			if (validLinks.Count == 0)
-			{
-				return NotFound("None of the links could be processed successfully.");
-			}
-			return Ok(new { ValidCount = validLinks.Count, Total = websiteLinks.Count(), Links = validLinks });
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Failed to scrape links from {Url}", Url);
-			return StatusCode(500, "An error occurred while scraping links.");
+			_logger.LogError(ex, "Error occurred while scraping megathread.");
+			return StatusCode(500, "Internal server error");
 		}
 	}
 }

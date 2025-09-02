@@ -18,6 +18,8 @@ builder.Services.Configure<ScraperRules>(builder.Configuration);
 builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<ResultCardSelectorService>();
+builder.Services.AddSingleton<MegathreadService>();
+builder.Services.AddSingleton<LinkExportService>();
 
 var app = builder.Build();
 
