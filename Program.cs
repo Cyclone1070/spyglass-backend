@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
 
@@ -11,10 +13,19 @@ builder.Services.AddHttpClient();
 builder.Services.AddOpenApi();
 
 // Add scraper rules
-builder.Configuration.AddJsonFile("scraperules.json", optional: false, reloadOnChange: true);
-builder.Services.Configure<ScraperRules>(builder.Configuration);
+builder.Services.Configure<ScraperRules>(builder.Configuration.GetSection("ScraperRules"));
+
+// Add MongoDB configuration
+builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
+
+builder.Services.AddSingleton<IMongoClient>(sp =>
+	new MongoClient(sp.GetRequiredService<IOptions<MongoDbSettings>>().Value.ConnectionString));
+
+builder.Services.AddScoped(sp =>
+	sp.GetRequiredService<IMongoClient>().GetDatabase(sp.GetRequiredService<IOptions<MongoDbSettings>>().Value.DatabaseName));
 
 // Add custom services
+builder.Services.AddScoped<MongoLinkService>();
 builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<ResultCardSelectorService>();

@@ -7,28 +7,27 @@ namespace spyglass_backend.Features.Links
 	public class LinkController(
 		ILogger<LinkController> logger,
 		MegathreadService megathreadService,
-		LinkExportService linkExportService) : ControllerBase
+		MongoLinkService mongoLinkService) : ControllerBase
 	{
 		private readonly ILogger<LinkController> _logger = logger;
 		private readonly MegathreadService _megathreadService = megathreadService;
-		private readonly LinkExportService _linkExportService = linkExportService;
+		private readonly MongoLinkService _mongoLinkService = mongoLinkService;
 
 		[HttpPost]
-		[ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+		[ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
 		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 		public async Task<IActionResult> PostLinks()
 		{
 			_logger.LogInformation("Received request to scrape megathread.");
 			try
 			{
-				var processedLinks = await _megathreadService.ScrapeMegathreadAsync();
+				var allLinks = await _megathreadService.ScrapeMegathreadAsync();
 
-				var filePath = await _linkExportService.SaveJsonFileAsync(processedLinks, "links.json");
+				await _mongoLinkService.CreateManyAsync(allLinks);
 
 				return Ok(new
 				{
-					Message = "File successfully generated and saved on the server.",
-					FilePath = filePath
+					Message = $"Successfully scraped and saved {allLinks.Count} links to the database."
 				});
 			}
 			catch (Exception ex)

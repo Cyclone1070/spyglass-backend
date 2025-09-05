@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("spyglass-backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c772cc390c4973a575b8f14a4090516771ec97e5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+88c420040df1d664cd51a6b4d91645ee17e36440")]
 [assembly: System.Reflection.AssemblyProductAttribute("spyglass-backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("spyglass-backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
