@@ -17,7 +17,7 @@ namespace spyglass_backend.Features.Links
 		private readonly ResultCardSelectorService _resultCardSelectorService = resultCardSelectorService;
 
 		// Main entry point. Orchestrates the scraping strategy.
-		public async Task<StoredLinks> ScrapeMegathreadAsync()
+		public async Task<List<Link>> ScrapeMegathreadAsync()
 		{
 			_logger.LogInformation("Starting megathread scraping...");
 			var websiteLinksTask = _rules.MegathreadUrls.Select(async link =>
@@ -72,10 +72,7 @@ namespace spyglass_backend.Features.Links
 				.Select(link => link!)
 				.ToList();
 
-			var finalLinks = links
-				.GroupBy(link => link.Category)
-				.ToDictionary(g => g.Key, g => g.ToList());
-			return new StoredLinks(websiteLinks.Count, searchLinks.Count, links.Count, finalLinks);
+			return links;
 		}
 	}
 }
