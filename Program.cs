@@ -8,7 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(Options.DefaultName, client =>
+{
+	client.Timeout = TimeSpan.FromSeconds(15);
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -30,7 +33,6 @@ builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<ResultCardSelectorService>();
 builder.Services.AddSingleton<MegathreadService>();
-builder.Services.AddSingleton<LinkExportService>();
 
 var app = builder.Build();
 
