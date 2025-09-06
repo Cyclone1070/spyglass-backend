@@ -23,5 +23,8 @@ namespace spyglass_backend.Features.Links
 
 		public async Task RemoveAsync(string id) =>
 			await _linksCollection.DeleteOneAsync(x => x.Id == id);
+
+		public async Task RemoveAllAsync() =>
+			await _linksCollection.DeleteManyAsync(_ => true);
 	}
 }

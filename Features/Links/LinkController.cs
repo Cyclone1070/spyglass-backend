@@ -21,6 +21,8 @@ namespace spyglass_backend.Features.Links
 			_logger.LogInformation("Received request to scrape megathread.");
 			try
 			{
+				await _mongoLinkService.RemoveAllAsync();
+
 				var allLinks = await _megathreadService.ScrapeMegathreadAsync();
 
 				await _mongoLinkService.CreateManyAsync(allLinks);
