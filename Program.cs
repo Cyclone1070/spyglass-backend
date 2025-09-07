@@ -5,6 +5,18 @@ using spyglass_backend.Features.Links;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+	builder.Logging.AddFilter((provider, category, logLevel) =>
+	{
+		if (logLevel != LogLevel.Debug)
+		{
+			return false;
+		}
+		return true;
+	});
+}
+
 // Add services to the container.
 
 builder.Services.AddControllers();

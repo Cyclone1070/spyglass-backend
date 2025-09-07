@@ -16,77 +16,70 @@ namespace spyglass_backend.Features.Links
 		public async Task<SearchLink> ScrapeSearchLinksAsync(WebsiteLink link)
 		{
 			_logger.LogInformation("Scraping search links for {Url}...", link.Url);
-			try
+
+			var client = _httpClientFactory.CreateClient();
+			var htmlContent = await client.GetStringAsync(link.Url);
+
+			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
+			var document = await context.OpenAsync(req => req.Content(htmlContent));
+
+			// --- Phase 1: Filter for likely search forms ---
+			// AngleSharp's Filter() is a LINQ extension method for filtering
+			var searchForms = document.QuerySelectorAll("form").Where(IsLikelySearchForm);
+
+			// --- Phase 2: Apply the "GET request only" constraint ---
+			var getForms = searchForms.Where(s =>
 			{
-				var client = _httpClientFactory.CreateClient();
-				var htmlContent = await client.GetStringAsync(link.Url);
+				var method = s.GetAttribute("method")?.ToLower() ?? "";
+				return method == "" || method == "get";
+			}).ToList();
 
-				var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-				var document = await context.OpenAsync(req => req.Content(htmlContent));
-
-				// --- Phase 1: Filter for likely search forms ---
-				// AngleSharp's Filter() is a LINQ extension method for filtering
-				var searchForms = document.QuerySelectorAll("form").Where(IsLikelySearchForm);
-
-				// --- Phase 2: Apply the "GET request only" constraint ---
-				var getForms = searchForms.Where(s =>
-				{
-					var method = s.GetAttribute("method")?.ToLower() ?? "";
-					return method == "" || method == "get";
-				}).ToList();
-
-				if (getForms.Count == 0)
-				{
-					throw new InvalidOperationException("No likely search forms with method=GET were found.");
-				}
-
-				// --- Phase 3: Find forms with exactly one valid input ---
-				var validSingleInputs = new List<IElement>();
-				foreach (var formSelection in getForms)
-				{
-					var inputsInThisForm = formSelection.QuerySelectorAll("input[type='search'], input[type='text']");
-					if (inputsInThisForm.Length == 1)
-					{
-						validSingleInputs.Add(inputsInThisForm.First());
-					}
-				}
-
-				// --- Phase 4: Use the scoring engine to choose the single best candidate ---
-				var bestInputSelection = ChooseBestSearchInput(validSingleInputs, link.Url);
-
-				// --- Phase 5: Construct the final SearchUrl template ---
-				var form = bestInputSelection.Closest("form")
-					?? throw new InvalidOperationException("The selected search input is not contained within a <form> element.");
-				var inputName = bestInputSelection.GetAttribute("name")
-					?? throw new InvalidOperationException("The selected search input does not have a 'name' attribute.");
-
-				var actionUrl = form.GetAttribute("action") ?? "";
-
-				// Use UriBuilder for idiomatic C# Url manipulation, ensuring absolute Urls.
-				var absoluteActionUri = new Uri(new Uri(link.Url), actionUrl);
-				var uriBuilder = new UriBuilder(absoluteActionUri)
-				{
-					// This creates a query string template like "q={0}"
-					Query = $"{Uri.EscapeDataString(inputName)}={{0}}"
-				};
-				var searchUrlTemplate = uriBuilder.ToString();
-
-				_logger.LogInformation("Found search link for {Title}: {Url}", link.Title, searchUrlTemplate);
-
-				return new SearchLink
-				{
-					Title = link.Title,
-					Url = link.Url,
-					Category = link.Category,
-					Starred = link.Starred,
-					SearchUrl = searchUrlTemplate
-				};
-			}
-			catch (Exception ex)
+			if (getForms.Count == 0)
 			{
-				_logger.LogError(ex, "Failed to find search link for {Url}", link.Url);
-				throw; // Re-throw to the caller (e.g., the controller)
+				throw new InvalidOperationException("No likely search forms with method=GET were found.");
 			}
+
+			// --- Phase 3: Find forms with exactly one valid input ---
+			var validSingleInputs = new List<IElement>();
+			foreach (var formSelection in getForms)
+			{
+				var inputsInThisForm = formSelection.QuerySelectorAll("input[type='search'], input[type='text']");
+				if (inputsInThisForm.Length == 1)
+				{
+					validSingleInputs.Add(inputsInThisForm.First());
+				}
+			}
+
+			// --- Phase 4: Use the scoring engine to choose the single best candidate ---
+			var bestInputSelection = ChooseBestSearchInput(validSingleInputs, link.Url);
+
+			// --- Phase 5: Construct the final SearchUrl template ---
+			var form = bestInputSelection.Closest("form")
+				?? throw new InvalidOperationException("The selected search input is not contained within a <form> element.");
+			var inputName = bestInputSelection.GetAttribute("name")
+				?? throw new InvalidOperationException("The selected search input does not have a 'name' attribute.");
+
+			var actionUrl = form.GetAttribute("action") ?? "";
+
+			// Use UriBuilder for idiomatic C# Url manipulation, ensuring absolute Urls.
+			var absoluteActionUri = new Uri(new Uri(link.Url), actionUrl);
+			var uriBuilder = new UriBuilder(absoluteActionUri)
+			{
+				// This creates a query string template like "q={0}"
+				Query = $"{Uri.EscapeDataString(inputName)}={{0}}"
+			};
+			var searchUrlTemplate = uriBuilder.ToString();
+
+			_logger.LogInformation("Found search link for {Title}: {Url}", link.Title, searchUrlTemplate);
+
+			return new SearchLink
+			{
+				Title = link.Title,
+				Url = link.Url,
+				Category = link.Category,
+				Starred = link.Starred,
+				SearchUrl = searchUrlTemplate
+			};
 		}
 
 
