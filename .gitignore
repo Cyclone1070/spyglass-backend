@@ -1,0 +1,85 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/packages/
+/node_modules/
+
+# tool-generated
+/project/obj/
+/project/bin/
+/src/**/obj/
+/src/**/bin/
+
+# build results
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio 2015 cache/options directory
+.vs/
+
+# Visual Studio 2017 cache/options directory
+.vs/
+
+# Rider directories
+.idea/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio Code files
+.vscode/
+
+# Rider files
+.idea/
+
+# Resharper files
+_ReSharper*/
+*.[Rr]esharper
+
+# Dotnet files
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Mac files
+.DS_Store
+
+# Thumbnails
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Secrets
+secrets.json
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Example.json
+
+# Logs
+logs/
+*.log
+
+# Test results
+test-results/
+*.trx
+*.xml
+
+# Local files
+*.local
