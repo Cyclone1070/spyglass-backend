@@ -7,33 +7,41 @@ namespace spyglass_backend.Features.Links
 	public record WebsiteLink
 	{
 		[BsonElement("title")]
-		public required string Title { get; set; }
+		public required string Title { get; init; }
 		[BsonElement("url")]
-		public required string Url { get; set; }
+		public required string Url { get; init; }
 		[BsonElement("category")]
-		public required string Category { get; set; }
+		public required string Category { get; init; }
 		[BsonElement("starred")]
-		public required bool Starred { get; set; }
+		public required bool Starred { get; init; }
 	}
 
 	public record SearchLink : WebsiteLink
 	{
 		[BsonElement("searchUrl")]
-		public required string SearchUrl { get; set; }
+		public required string SearchUrl { get; init; }
 	}
 	public record Link : SearchLink
 	{
 		[BsonId]
 		[BsonRepresentation(BsonType.ObjectId)]
-		public string Id { get; set; } = null!;
+		public string Id { get; init; } = null!;
 		[BsonElement("selector")]
-		public required string Selector { get; set; }
+		public required string Selector { get; init; }
 	}
 
 	// Records for finding card css selectors
-	public record ElementSelector(string Parent, string Element)
+	public record ElementSelector
 	{
+		public required string Parent { get; init; }
+		public required string Element { get; init; }
+
 		public override string ToString() => $"{Parent} > {Element}";
 	};
-	public record RepeatingPattern(string Parent, List<IElement> Elements, int Count) { }
+	public record RepeatingPattern
+	{
+		public required string Parent { get; init; }
+		public required List<IElement> Elements { get; init; }
+		public required int Count { get; init; }
+	}
 }
