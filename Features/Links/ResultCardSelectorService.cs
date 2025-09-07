@@ -73,11 +73,12 @@ namespace spyglass_backend.Features.Links
 						.Select(validGroup =>
 						{
 							var elements = validGroup.ToList(); // Iterate ONCE to create the list
-							return new RepeatingPattern(
-								Parent: BuildParentSelector(siblingGroup.Key!),
-								Elements: elements,           // Use the created list
-								Count: elements.Count         // Use the list's .Count property (instant)
-							);
+							return new RepeatingPattern
+							{
+								Parent = BuildParentSelector(siblingGroup.Key!),
+								Elements = elements,           // Use the created list
+								Count = elements.Count         // Use the list's .Count property (instant) };
+							};
 						})
 				)
 				.ToList();
@@ -139,14 +140,22 @@ namespace spyglass_backend.Features.Links
 			// If there's no parent (e.g., for the <html> tag), the selector is just the element itself.
 			if (parent == null)
 			{
-				return new ElementSelector(string.Empty, elementSelector);
+				return new ElementSelector
+				{
+					Parent = string.Empty,
+					Element = elementSelector
+				};
 			}
 
 			// Build the selector part for the parent.
 			var parentSelector = BuildParentSelector(parent);
 
 			// Combine them using the direct child combinator ">".
-			return new ElementSelector(parentSelector, elementSelector);
+			return new ElementSelector
+			{
+				Parent = parentSelector,
+				Element = elementSelector
+			};
 		}
 
 		// Creates a generalized CSS selector for a group of elements by finding their common classes.
@@ -167,7 +176,11 @@ namespace spyglass_backend.Features.Links
 			{
 				builder.Append('.').Append(string.Join(".", commonClasses));
 			}
-			return new ElementSelector(parent, builder.ToString());
+			return new ElementSelector
+			{
+				Parent = parent,
+				Element = builder.ToString()
+			};
 		}
 
 		// Helper function to build a consistent "tag.class1.class2" selector for a single element.
