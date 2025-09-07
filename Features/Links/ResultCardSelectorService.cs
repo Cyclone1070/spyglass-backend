@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Web;
 using AngleSharp;
@@ -20,7 +21,11 @@ namespace spyglass_backend.Features.Links
 		public async Task<Link> FindResultCardSelectorAsync(SearchLink searchLink)
 		{
 			var noResultsUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_queries.InvalidQuery));
-			var noResultsBlacklist = await GetElementSelectorSetAsync(noResultsUrl);
+			var (noResultsDoc, noResultsResponseTime) = await GetHtmlDocumentAsync(noResultsUrl);
+			var noResultsBlacklist = noResultsDoc.All
+				.Select(GetElementSelector)
+				.Where(s => !string.IsNullOrEmpty(s.Element)) // Filter out empty selectors
+				.ToHashSet();
 
 			try
 			{
@@ -30,10 +35,10 @@ namespace spyglass_backend.Features.Links
 
 				_logger.LogInformation("Attempting differential scraping for category '{Category}'.", searchLink.Category);
 				// Find the repeating pattern, do it twice to get a wider variety of cards in case some idiot fucked up their html
-				var withResultsDoc1 = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])));
+				var (withResultsDoc1, withResultsResponseTime1) = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])));
 				var pattern1 = PerformDiffAnalysis(withResultsDoc1, noResultsBlacklist);
 
-				var withResultsDoc2 = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[1])));
+				var (withResultsDoc2, withResultsResponseTime2) = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[1])));
 				var pattern2 = PerformDiffAnalysis(withResultsDoc2, noResultsBlacklist);
 
 				if (pattern1.Parent != pattern2.Parent)
@@ -41,7 +46,8 @@ namespace spyglass_backend.Features.Links
 					throw new InvalidOperationException("Differential scraping found inconsistent patterns.");
 				}
 				var selector = GetCommonSelector(pattern1.Parent, pattern1.Elements.Concat(pattern2.Elements));
-				return CreateLink(searchLink, selector.ToString());
+				var averageResponseTime = (noResultsResponseTime + withResultsResponseTime1 + withResultsResponseTime2) / 3;
+				return CreateLink(searchLink, selector.ToString(), averageResponseTime);
 			}
 			catch (Exception e)
 			{
@@ -50,7 +56,7 @@ namespace spyglass_backend.Features.Links
 		}
 
 		// Finds repeating element patterns that do NOT exist on the blacklist.
-		private static RepeatingPattern PerformDiffAnalysis(IDocument withResultsDoc, IReadOnlySet<ElementSelector> blacklist)
+		private static RepeatingPattern PerformDiffAnalysis(IDocument withResultsDoc, HashSet<ElementSelector> blacklist)
 		{
 			// Filter elements to only those present in the 'diff' selector set.
 			var candidateElements = withResultsDoc.All
@@ -112,22 +118,18 @@ namespace spyglass_backend.Features.Links
 		// UTILITY HELPERS
 		// =================================================================
 
-		private async Task<IDocument> GetHtmlDocumentAsync(string url)
+		private async Task<(IDocument, long)> GetHtmlDocumentAsync(string url)
 		{
 			var client = _httpClientFactory.CreateClient("ScraperClient");
+			var stopwatch = Stopwatch.StartNew();
 			var htmlContent = await client.GetStringAsync(url);
+			stopwatch.Stop();
 			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-			return await context.OpenAsync(req => req.Content(htmlContent));
+			var document = await context.OpenAsync(req => req.Content(htmlContent));
+			return (document, stopwatch.ElapsedMilliseconds);
 		}
 
-		private async Task<IReadOnlySet<ElementSelector>> GetElementSelectorSetAsync(string url)
-		{
-			var doc = await GetHtmlDocumentAsync(url);
-			return doc.All
-				.Select(GetElementSelector)
-				.Where(s => !string.IsNullOrEmpty(s.Element)) // Filter out empty selectors
-				.ToHashSet();
-		}
+
 
 		private static ElementSelector GetElementSelector(IElement element)
 		{
@@ -244,14 +246,15 @@ namespace spyglass_backend.Features.Links
 			return paginationKeywords.Any(key => text.Equals(key, StringComparison.OrdinalIgnoreCase));
 		}
 
-		private static Link CreateLink(SearchLink searchLink, string selector) => new()
+		private static Link CreateLink(SearchLink searchLink, string selector, long averageResponseTime) => new()
 		{
 			Title = searchLink.Title,
 			Url = searchLink.Url,
 			Category = searchLink.Category,
 			Starred = searchLink.Starred,
 			SearchUrl = searchLink.SearchUrl,
-			Selector = selector
+			Selector = selector,
+			ResponseTime = averageResponseTime
 		};
 	}
 }
