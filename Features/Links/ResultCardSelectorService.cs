@@ -72,10 +72,12 @@ namespace spyglass_backend.Features.Links
 						.GroupBy(el => string.Join("", el.Children.Select(c => c.TagName))) // Key: "DIVSPANIMG"
 																							// 3. Apply the final filtering criteria.
 						.Where(patternGroup =>
-							patternGroup.Count() > 1 && // It must be a repeating pattern.
-							patternGroup.First().Children.Length > 0 && // Must have children.
-							patternGroup.First().QuerySelector("a") != null // A descendant must be an <a> tag.
-						)
+						{
+							var firstElementInGroup = patternGroup.First();
+							return patternGroup.Count() > 1 && // It must be a repeating pattern.
+							       firstElementInGroup.Children.Length > 0 && // Must have children.
+							       firstElementInGroup.QuerySelector("a") != null; // A descendant must be an <a> tag.
+						})
 						// 4. Project the valid groups into our record for scoring.
 						.Select(validGroup =>
 						{
