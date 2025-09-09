@@ -121,7 +121,7 @@ namespace spyglass_backend.Features.Links
 
 		private async Task<(IDocument, long)> GetHtmlDocumentAsync(string url)
 		{
-			var client = _httpClientFactory.CreateClient("ScraperClient");
+			var client = _httpClientFactory.CreateClient();
 			var stopwatch = Stopwatch.StartNew();
 			var htmlContent = await client.GetStringAsync(url);
 			stopwatch.Stop();
