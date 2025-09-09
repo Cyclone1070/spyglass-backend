@@ -1,30 +1,31 @@
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
+using spyglass_backend.Features.Links;
 
 namespace spyglass_backend.Features.Search
 {
 	[ApiController]
 	[Route("api/[controller]")]
 	public class SearchController(
-			ILogger<SearchController> logger) : ControllerBase
+			ILogger<SearchController> logger,
+			SearchService searchService,
+			MongoLinkService mongoLinkService) : ControllerBase
 	{
 		private readonly ILogger<SearchController> _logger = logger;
+		private readonly SearchService _searchService = searchService;
+		private readonly MongoLinkService _mongoLinkService = mongoLinkService;
 
 		[HttpGet]
-		[ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-		[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-		public IActionResult Get()
+		public async Task<IAsyncEnumerable<Result>> Get([FromQuery] string q)
 		{
 			_logger.LogInformation("Received request to search.");
-			try
-			{
-				// Placeholder for actual search logic
-				return Ok("Search functionality is under development.");
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error occurred while processing search request.");
-				return StatusCode(500, "Internal server error");
-			}
+			var links = await _mongoLinkService.GetAsync("responseTime", SortDirection.Ascending);
+
+			var cancellationToken = HttpContext.RequestAborted;
+
+			var resultStream = _searchService.SearchLinksAsync(q, links, cancellationToken);
+
+			return resultStream;
 		}
 	}
 }
