@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 using AngleSharp;
 using AngleSharp.Dom;
@@ -8,7 +9,7 @@ using spyglass_backend.Configuration;
 
 namespace spyglass_backend.Features.Links
 {
-	public class ResultCardSelectorService(
+	public partial class ResultCardSelectorService(
 		ILogger<ResultCardSelectorService> logger,
 		IHttpClientFactory httpClientFactory,
 		IOptions<ScraperRules> rules)
@@ -176,7 +177,8 @@ namespace spyglass_backend.Features.Links
 			var builder = new StringBuilder(tagName);
 			if (commonClasses.Count > 0)
 			{
-				builder.Append('.').Append(string.Join(".", commonClasses));
+				var escapedCommonClasses = commonClasses.Select(EscapeCssIdentifier);
+				builder.Append('.').Append(string.Join(".", escapedCommonClasses));
 			}
 			return new ElementSelector
 			{
@@ -194,7 +196,10 @@ namespace spyglass_backend.Features.Links
 			var builder = new StringBuilder(tag);
 
 			// --- MODIFIED LOGIC ---
-			var classes = element.ClassList.OrderBy(c => c).ToList();
+			var classes = element.ClassList
+				.Select(EscapeCssIdentifier) // Escape each class name
+				.OrderBy(c => c)
+				.ToList();
 
 			if (classes.Count > 0)
 			{
@@ -223,6 +228,21 @@ namespace spyglass_backend.Features.Links
 			// This avoids repeating the class-building code.
 			return BuildClassSelector(element);
 		}
+		[GeneratedRegex(@"[^a-zA-Z0-9_-]")]
+		private static partial Regex InvalidCssCharRegex();
+
+		private static string EscapeCssIdentifier(string identifier)
+		{
+			if (string.IsNullOrEmpty(identifier))
+			{
+				return string.Empty;
+			}
+
+			// This regex matches any character that is NOT a-z, A-Z, 0-9, underscore, or hyphen.
+			// The replacement pattern "\\$&" inserts a literal backslash before the matched character.
+			return InvalidCssCharRegex().Replace(identifier, @"\$&");
+		}
+
 
 		// Heuristically determines if an individual element is a pagination item by its content.
 		private static bool IsPaginationCard(IElement element)

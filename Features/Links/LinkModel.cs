@@ -29,7 +29,7 @@ namespace spyglass_backend.Features.Links
 		[BsonElement("selector")]
 		public required string Selector { get; init; }
 		[BsonElement("responseTime")]
-		public long ResponseTime { get; set; }
+		public long ResponseTime { get; init; }
 	}
 
 	// Records for finding card css selectors

@@ -2,20 +2,22 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
+using spyglass_backend.Features.Search;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Environment.IsDevelopment())
-{
-	builder.Logging.AddFilter((provider, category, logLevel) =>
-	{
-		if (logLevel != LogLevel.Debug)
-		{
-			return false;
-		}
-		return true;
-	});
-}
+// Configure logging filter in development environment
+// if (builder.Environment.IsDevelopment())
+// {
+// 	builder.Logging.AddFilter((provider, category, logLevel) =>
+// 	{
+// 		if (logLevel != LogLevel.Debug)
+// 		{
+// 			return false;
+// 		}
+// 		return true;
+// 	});
+// }
 
 // Add services to the container.
 
@@ -45,6 +47,7 @@ builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<ResultCardSelectorService>();
 builder.Services.AddSingleton<MegathreadService>();
+builder.Services.AddSingleton<SearchService>();
 
 var app = builder.Build();
 
