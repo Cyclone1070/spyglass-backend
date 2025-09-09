@@ -116,9 +116,10 @@ namespace spyglass_backend.Features.Links
 			var formTextBuilder = new StringBuilder();
 
 			// Iterate over elements like h1, h2, etc., and append their text to the builder.
-			formSelection.QuerySelectorAll("h1, h2, h3, button, a[role='button'], input[type='submit']")
-				.ToList()
-				.ForEach(el => formTextBuilder.Append(el.TextContent).Append(' '));
+			foreach (var el in formSelection.QuerySelectorAll("h1, h2, h3, button, a[role='button'], input[type='submit']"))
+			{
+				formTextBuilder.Append(el.TextContent).Append(' ');
+			}
 
 			// C# Regex.IsMatch is the equivalent of Go's nonSearchKeywords.MatchString.
 			return !NonSearchKeywordsRegex().IsMatch(formTextBuilder.ToString());
