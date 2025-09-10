@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.Extensions.Options;
 using spyglass_backend.Configuration;
 
@@ -16,8 +17,7 @@ namespace spyglass_backend.Features.Links
 		private readonly SearchLinkService _searchLinkService = searchLinkService;
 		private readonly ResultCardSelectorService _resultCardSelectorService = resultCardSelectorService;
 
-		private static int _concurrentSearchLinkOperations = 0;
-		private static int _concurrentResultCardSelectorOperations = 0;
+		private static int _concurrentOperations = 0;
 
 		// Main entry point. Orchestrates the scraping strategy.
 		public async Task<List<Link>> ScrapeMegathreadAsync()
@@ -41,65 +41,50 @@ namespace spyglass_backend.Features.Links
 				.DistinctBy(link => link.Url)
 				.ToList();
 
-			_logger.LogDebug("Starting {Count} ScrapeSearchLinksAsync operations.", websiteLinks.Count);
-			var SearchLinksTasks = websiteLinks.Select(async websiteLink =>
-			{
-				var count = Interlocked.Increment(ref _concurrentSearchLinkOperations);
-				_logger.LogDebug("ScrapeSearchLinksAsync starting. Concurrent operations: {Count}", count);
-				try
-				{
-					return await _searchLinkService.ScrapeSearchLinksAsync(websiteLink);
-				}
-				catch (InvalidOperationException e)
-				{
-					_logger.LogWarning(e, "Could not generate search links for {Url}", websiteLink.Url);
-					return null;
-				}
-				catch (Exception e)
-				{
-					_logger.LogError(e, "Error generating search links for {Url}", websiteLink.Url);
-					return null;
-				}
-				finally
-				{
-					var countAfter = Interlocked.Decrement(ref _concurrentSearchLinkOperations);
-					_logger.LogDebug("ScrapeSearchLinksAsync finished. Concurrent operations: {Count}. Url: {Url}.", countAfter, websiteLink.Url);
-				}
-			});
-			var searchLinks = (await Task.WhenAll(SearchLinksTasks))
-				.Where(link => link != null)
-				.Select(link => link!)
-				.ToList();
+			var searchLinks = new ConcurrentBag<SearchLink>();
+			var finalLinks = new ConcurrentBag<Link>();
 
-			_logger.LogDebug("Starting {Count} FindResultCardSelectorAsync operations.", searchLinks.Count);
-			var resultCardSelectorTasks = searchLinks.Select(async searchLink =>
+			// 1. Configure the parallelism options.
+			var parallelOptions = new ParallelOptions
 			{
-				var count = Interlocked.Increment(ref _concurrentResultCardSelectorOperations);
-				_logger.LogDebug("FindResultCardSelectorAsync starting. Concurrent operations: {Count}", count);
+				MaxDegreeOfParallelism = 90 // Set your concurrency limit here
+			};
+
+			_logger.LogDebug("Starting {Count} combined operations with a concurrency limit of {Limit}.", websiteLinks.Count, parallelOptions.MaxDegreeOfParallelism);
+
+			// 2. Use Parallel.ForEachAsync to iterate and process the collection.
+			await Parallel.ForEachAsync(websiteLinks, parallelOptions, async (websiteLink, cancellationToken) =>
+			{
+				var count = Interlocked.Increment(ref _concurrentOperations);
+				_logger.LogDebug("ScrapeSearchLinksAsync starting. Concurrent operations: {Count}", count);
+
 				try
 				{
-					return await _resultCardSelectorService.FindResultCardSelectorAsync(searchLink);
+					var searchLink = await _searchLinkService.ScrapeSearchLinksAsync(websiteLink);
+					searchLinks.Add(searchLink);
+
+					var link = await _resultCardSelectorService.FindResultCardSelectorAsync(searchLink);
+					finalLinks.Add(link);
 				}
 				catch (InvalidOperationException e)
 				{
-					_logger.LogWarning(e, "Could not find result card selector for {Url}", searchLink.Url);
-					return null;
+					_logger.LogWarning(e, "Could not complete operation for {Url}", websiteLink.Url);
 				}
 				catch (Exception e)
 				{
-					_logger.LogError(e, "Error finding result card selector for {SearchUrl}", searchLink.SearchUrl);
-					return null;
+					_logger.LogError(e, "An unexpected error occurred during operation for {Url}", websiteLink.Url);
 				}
 				finally
 				{
-					var countAfter = Interlocked.Decrement(ref _concurrentResultCardSelectorOperations);
-					_logger.LogDebug("FindResultCardSelectorAsync finished. Concurrent operations: {Count}. Url: {Url}.", countAfter, searchLink.Url);
+					count = Interlocked.Decrement(ref _concurrentOperations);
+					_logger.LogDebug("ScrapeSearchLinksAsync completed. Concurrent operations: {Count}", count);
 				}
 			});
-			var links = (await Task.WhenAll(resultCardSelectorTasks))
-				.Where(link => link != null)
-				.Select(link => link!)
-				.ToList();
+
+			var links = finalLinks.DistinctBy(link => link.Url).ToList();
+
+			_logger.LogInformation("Scraped {WebsiteLinkCount} website links, resulting in {SearchLinkCount} search links and {FinalLinkCount} final links.",
+				websiteLinks.Count, searchLinks.Count, links.Count);
 
 			return links;
 		}
