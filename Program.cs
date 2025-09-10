@@ -6,6 +6,8 @@ using spyglass_backend.Features.Search;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 // Configure logging filter in development environment
 if (builder.Environment.IsDevelopment())
 {
@@ -29,6 +31,18 @@ builder.Services.AddHttpClient(Options.DefaultName, client =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
+// Cross origin Resource Sharing (CORS) policy
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy(name: MyAllowSpecificOrigins,
+					  policy =>
+					  {
+						  // Allow Vite development server
+						  policy.WithOrigins("http://localhost:5173")
+								.AllowAnyHeader()
+								.AllowAnyMethod();
+					  });
+});
 
 // Add scraper rules
 builder.Services.Configure<ScraperRules>(builder.Configuration.GetSection("ScraperRules"));
@@ -58,10 +72,9 @@ if (app.Environment.IsDevelopment())
 	app.MapOpenApi();
 }
 
+app.UseCors(MyAllowSpecificOrigins);
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
