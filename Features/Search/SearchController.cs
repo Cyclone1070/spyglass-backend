@@ -16,16 +16,15 @@ namespace spyglass_backend.Features.Search
 		private readonly MongoLinkService _mongoLinkService = mongoLinkService;
 
 		[HttpGet]
-		public async Task<IAsyncEnumerable<Result>> Get([FromQuery] string q)
+		public async Task<IActionResult> Get([FromQuery] string q)
 		{
 			_logger.LogInformation("Received request to search.");
 			var links = await _mongoLinkService.GetAsync("responseTime", SortDirection.Ascending);
 
 			var cancellationToken = HttpContext.RequestAborted;
-
 			var resultStream = _searchService.SearchLinksAsync(q, links, cancellationToken);
 
-			return resultStream;
+			return new NdjsonStreamResult<Result>(resultStream);
 		}
 	}
 }
