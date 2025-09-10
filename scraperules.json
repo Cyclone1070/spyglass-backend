@@ -49,10 +49,9 @@
 			"Name": "Abandonware/ROM",
 			"Selector": "#abandonware-retro, #rom-sites, #nintendo-roms, #sony-roms"
 		},
-		{ "Name": "Mac Games", "Selector": "#mac-gaming" },
 		{ "Name": "Linux Games", "Selector": "#linux-gaming" },
 		{ "Name": "Windows Software", "Selector": "#software-sites" },
-		{ "Name": "Mac Software", "Selector": "#software-sites-1" },
+		{ "Name": "Mac", "Selector": "#software-sites-1, #mac-gaming" },
 		{ "Name": "Android", "Selector": "#modded-apks, #untouched-apks" },
 		{ "Name": "iOS", "Selector": "#ios-ipas" }
 	],

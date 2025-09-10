@@ -7,24 +7,24 @@ using spyglass_backend.Features.Search;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure logging filter in development environment
-// if (builder.Environment.IsDevelopment())
-// {
-// 	builder.Logging.AddFilter((provider, category, logLevel) =>
-// 	{
-// 		if (logLevel != LogLevel.Debug)
-// 		{
-// 			return false;
-// 		}
-// 		return true;
-// 	});
-// }
+if (builder.Environment.IsDevelopment())
+{
+	builder.Logging.AddFilter((provider, category, logLevel) =>
+	{
+		if (logLevel != LogLevel.Debug && logLevel != LogLevel.Warning)
+		{
+			return false;
+		}
+		return true;
+	});
+}
 
 // Add services to the container.
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient(Options.DefaultName, client =>
 {
-	client.Timeout = TimeSpan.FromSeconds(15);
+	client.Timeout = TimeSpan.FromSeconds(10);
 });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();

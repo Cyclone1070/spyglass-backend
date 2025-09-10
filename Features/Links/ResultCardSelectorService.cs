@@ -38,7 +38,7 @@ namespace spyglass_backend.Features.Links
 				// Find the repeating pattern, do it twice to get a wider variety of cards in case some idiot fucked up their html
 				var (withResultsDoc1, withResultsResponseTime1) = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])));
 				var pattern1 = PerformDiffAnalysis(withResultsDoc1, noResultsBlacklist);
-
+				await Task.Delay(100); // Be nice to the server
 				var (withResultsDoc2, withResultsResponseTime2) = await GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[1])));
 				var pattern2 = PerformDiffAnalysis(withResultsDoc2, noResultsBlacklist);
 
@@ -75,8 +75,8 @@ namespace spyglass_backend.Features.Links
 						{
 							var firstElementInGroup = patternGroup.First();
 							return patternGroup.Count() > 1 && // It must be a repeating pattern.
-							       firstElementInGroup.Children.Length > 0 && // Must have children.
-							       firstElementInGroup.QuerySelector("a") != null; // A descendant must be an <a> tag.
+								   firstElementInGroup.Children.Length > 0 && // Must have children.
+								   firstElementInGroup.QuerySelector("a") != null; // A descendant must be an <a> tag.
 						})
 						// 4. Project the valid groups into our record for scoring.
 						.Select(validGroup =>
