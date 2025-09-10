@@ -1,14 +1,11 @@
-version: '3.8'
-
 services:
-  spyglass-backend:
+  server:
     build: .
     ports:
       - "5250:5250"
-      - "7232:7232"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5250;https://+:7232
+      - ASPNETCORE_URLS=http://+:5250
       - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
     depends_on:
       - mongodb
