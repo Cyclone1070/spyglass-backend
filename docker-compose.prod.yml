@@ -1,0 +1,24 @@
+services:
+  spyglass-backend:
+    # This tells Compose to build the image from the Dockerfile in the current directory.
+    build: .
+    
+    # This ensures your container restarts automatically if it crashes or the server reboots.
+    restart: always 
+    
+    ports:
+      # Expose the application's ports so you can access it.
+      # In a true production setup with a reverse proxy, you might remove these.
+      - "5250:5250"
+      - "7232:7232"
+      
+    environment:
+      # Set the environment to Production for security and performance.
+      - ASPNETCORE_ENVIRONMENT=Production
+      
+      # Tell the app which ports to listen on inside the container.
+      - ASPNETCORE_URLS=http://+:5250;https://+:7232
+      
+      # This reads the MONGO_CONNECTION_STRING from your .env file and injects it
+      # into the container as an environment variable for your app to use.
+      - MongoDbSettings__ConnectionString=${MONGO_CONNECTION_STRING}

@@ -28,6 +28,7 @@ builder.Services.AddHttpClient(Options.DefaultName, client =>
 });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
 
 // Add scraper rules
 builder.Services.Configure<ScraperRules>(builder.Configuration.GetSection("ScraperRules"));
