@@ -21,26 +21,38 @@ namespace spyglass_backend.Features.Search
 
 			_ = Task.Run(async () =>
 			{
+				// Configure the parallelism options.
+				var parallelOptions = new ParallelOptions
+				{
+					MaxDegreeOfParallelism = 90 // Set your desired concurrency limit here (e.g., 10)
+				};
+
 				try
 				{
-					var scrapingTasks = links.Select(async link =>
+					await Parallel.ForEachAsync(links, parallelOptions, async (link, innerCancellationToken) =>
 					{
+						// Use the combined cancellation token
+						using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, innerCancellationToken);
+						var currentCancellationToken = linkedCts.Token;
+
 						try
 						{
-							var results = ScrapeLinkAsync(normalisedQuery, link, cancellationToken);
-							await foreach (var result in results.WithCancellation(cancellationToken))
+							var results = ScrapeLinkAsync(normalisedQuery, link, currentCancellationToken);
+							await foreach (var result in results.WithCancellation(currentCancellationToken))
 							{
 								// Put the found item on the conveyor belt
-								await channel.Writer.WriteAsync(result, cancellationToken);
+								await channel.Writer.WriteAsync(result, currentCancellationToken);
 							}
 						}
-						catch
+						catch (OperationCanceledException)
 						{
-							_logger.LogError("Failed to scrape link {LinkUrl}", link.Url);
+							_logger.LogInformation("Scraping for link {LinkUrl} was cancelled.", link.Url);
 						}
-					}).ToList();
-
-					await Task.WhenAll(scrapingTasks);
+						catch (Exception ex)
+						{
+							_logger.LogError(ex, "Failed to scrape link {LinkUrl}", link.Url);
+						}
+					});
 				}
 				finally
 				{
