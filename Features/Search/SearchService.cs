@@ -100,16 +100,13 @@ namespace spyglass_backend.Features.Search
 					// 2. Now, use this single, accurate score to make a decision.
 					if (bestCandidate is not null && bestCandidate.Score >= 79)
 					{
-						yield return new Result
-						{
-							Title = bestCandidate.Text,
-							ResultUrl = absoluteUrl,
-							WebsiteLink = link.Url,
-							Starred = link.Starred,
-							Score = bestCandidate.Score,
-							Year = "",
-							ImageUrl = ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src"))
-						};
+						yield return CreateResult(
+							link: link,
+							title: bestCandidate.Text,
+							resultUrl: absoluteUrl,
+							score: bestCandidate.Score,
+							year: DateTime.Now.Year.ToString(),
+							imageUrl: ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
 					}
 				}
 			}
@@ -185,6 +182,58 @@ namespace spyglass_backend.Features.Search
 			}
 
 			return score;
+		}
+		private static Result CreateResult(Link link, string title, string resultUrl, int score, string year, string? imageUrl = null)
+		{
+
+			return link.Category switch
+			{
+				"Books" => new BookResult
+				{
+					Title = title,
+					ResultUrl = resultUrl,
+					WebsiteUrl = link.Url,
+					WebsiteTitle = link.Title,
+					WebsiteStarred = link.Starred,
+					Score = score,
+					Year = year,
+					ImageUrl = imageUrl
+				},
+				"Movies" => new MovieResult
+				{
+					Title = title,
+					ResultUrl = resultUrl,
+					WebsiteUrl = link.Url,
+					WebsiteTitle = link.Title,
+					WebsiteStarred = link.Starred,
+					Score = score,
+					Year = year,
+					ImageUrl = imageUrl
+				},
+				"Games Download" => new GameResult
+				{
+					Title = title,
+					ResultUrl = resultUrl,
+					WebsiteUrl = link.Url,
+					WebsiteTitle = link.Title,
+					WebsiteStarred = link.Starred,
+					Score = score,
+					Year = year,
+					ImageUrl = imageUrl
+				},
+				// The underscore _ is the equivalent of the 'default' case
+				_ => new Result
+				{
+					Title = title,
+					ResultUrl = resultUrl,
+					WebsiteUrl = link.Url,
+					WebsiteTitle = link.Title,
+					WebsiteStarred = link.Starred,
+					Score = score,
+					Year = year,
+					ImageUrl = imageUrl
+				}
+			};
 		}
 	}
 }
