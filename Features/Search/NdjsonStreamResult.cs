@@ -9,6 +9,11 @@ namespace spyglass_backend.Features.Search
 	{
 		private readonly IAsyncEnumerable<T> _dataStream = dataStream;
 
+		private static readonly JsonSerializerOptions _jsonOptions = new()
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+		};
+
 		public async Task ExecuteResultAsync(ActionContext context)
 		{
 			var response = context.HttpContext.Response;
@@ -21,7 +26,7 @@ namespace spyglass_backend.Features.Search
 			await foreach (var item in _dataStream.WithCancellation(cancellationToken))
 			{
 				// Serialize each individual object. Your `Type` property will be handled automatically.
-				var jsonString = JsonSerializer.Serialize(item);
+				var jsonString = JsonSerializer.Serialize(item, _jsonOptions);
 
 				// Write the object's JSON string, followed by a newline.
 				await response.WriteAsync(jsonString + "\n", cancellationToken);
