@@ -62,9 +62,22 @@ builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<ResultCardSelectorService>();
 builder.Services.AddSingleton<MegathreadService>();
+builder.Services.AddScoped<MongoResultService>();
 builder.Services.AddSingleton<SearchService>();
 
 var app = builder.Build();
+
+// Create TTL index on the 'results' collection
+using (var scope = app.Services.CreateScope())
+{
+	var services = scope.ServiceProvider;
+	var database = services.GetRequiredService<IMongoDatabase>();
+	var resultsCollection = database.GetCollection<StoredResult>("results");
+	var indexKeysDefinition = Builders<StoredResult>.IndexKeys.Ascending(x => x.CreatedAt);
+	var indexOptions = new CreateIndexOptions { ExpireAfter = TimeSpan.FromDays(7) }; // Set the desired expiration time
+	var indexModel = new CreateIndexModel<StoredResult>(indexKeysDefinition, indexOptions);
+	resultsCollection.Indexes.CreateOne(indexModel);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
