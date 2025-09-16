@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using spyglass_backend.Features.Results;
 
 namespace spyglass_backend.Features.Search
 {

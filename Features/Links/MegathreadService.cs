@@ -1,23 +1,23 @@
 using System.Collections.Concurrent;
+using System.Web;
 using Microsoft.Extensions.Options;
 using spyglass_backend.Configuration;
+using spyglass_backend.Features.Results;
 
 namespace spyglass_backend.Features.Links
 {
 	public class MegathreadService(
 		ILogger<MegathreadService> logger,
 		IOptions<ScraperRules> rules,
+		WebService webService,
 		WebsiteLinkService websiteLinkService,
-		SearchLinkService searchLinkService,
-		ResultCardSelectorService resultCardSelectorService)
+		SearchLinkService searchLinkService)
 	{
 		private readonly ILogger<MegathreadService> _logger = logger;
 		private readonly ScraperRules _rules = rules.Value;
+		private readonly WebService _webService = webService;
 		private readonly WebsiteLinkService _websiteLinkService = websiteLinkService;
 		private readonly SearchLinkService _searchLinkService = searchLinkService;
-		private readonly ResultCardSelectorService _resultCardSelectorService = resultCardSelectorService;
-
-		private static int _concurrentOperations = 0;
 
 		// Main entry point. Orchestrates the scraping strategy.
 		public async Task<List<Link>> ScrapeMegathreadAsync()
@@ -47,24 +47,38 @@ namespace spyglass_backend.Features.Links
 			// 1. Configure the parallelism options.
 			var parallelOptions = new ParallelOptions
 			{
-				MaxDegreeOfParallelism = 90 // Set your concurrency limit here
+				MaxDegreeOfParallelism = 80 // Set your concurrency limit here
 			};
-
-			_logger.LogDebug("Starting {Count} combined operations with a concurrency limit of {Limit}.", websiteLinks.Count, parallelOptions.MaxDegreeOfParallelism);
 
 			// 2. Use Parallel.ForEachAsync to iterate and process the collection.
 			await Parallel.ForEachAsync(websiteLinks, parallelOptions, async (websiteLink, cancellationToken) =>
 			{
-				var count = Interlocked.Increment(ref _concurrentOperations);
-				_logger.LogDebug("ScrapeSearchLinksAsync starting. Concurrent operations: {Count}", count);
-
 				try
 				{
 					var searchLink = await _searchLinkService.ScrapeSearchLinksAsync(websiteLink);
 					searchLinks.Add(searchLink);
 
-					var link = await _resultCardSelectorService.FindResultCardSelectorAsync(searchLink);
-					finalLinks.Add(link);
+					// Get the queries
+					string[] queries = _rules.CardFindingQueries.ValidQueries.TryGetValue(websiteLink.Category, out var categoryQueries)
+						? categoryQueries
+						: ["the", "of"];
+					// Get the blacklist element selectors
+					var noResultUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_rules.CardFindingQueries.InvalidQuery));
+					var (noResultDoc, noResultResponseTime) = await _webService.GetHtmlDocumentAsync(noResultUrl);
+					var noResultBlacklist = noResultDoc.All
+						.Select(WebService.GetElementSelector)
+						.Where(s => !string.IsNullOrEmpty(s.Element)) // Filter out empty selectors
+						.ToHashSet();
+
+					// Get the 2 documents with results
+					var (withResultsDoc1, withResultsResponseTime1) = await _webService.GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])));
+					var (withResultsDoc2, withResultsResponseTime2) = await _webService.GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[1])));
+					var averageResponseTime = (noResultResponseTime + withResultsResponseTime1 + withResultsResponseTime2) / 3;
+
+					// Find the result card selector
+					var resultCardSelector = ResultCardService.FindResultCardSelector(noResultBlacklist, withResultsDoc1, withResultsDoc2);
+
+					finalLinks.Add(CreateLink(searchLink, resultCardSelector.ToString(), averageResponseTime));
 				}
 				catch (InvalidOperationException e)
 				{
@@ -73,11 +87,6 @@ namespace spyglass_backend.Features.Links
 				catch (Exception e)
 				{
 					_logger.LogError(e, "An unexpected error occurred during operation for {Url}", websiteLink.Url);
-				}
-				finally
-				{
-					count = Interlocked.Decrement(ref _concurrentOperations);
-					_logger.LogDebug("ScrapeSearchLinksAsync completed. Concurrent operations: {Count}", count);
 				}
 			});
 
@@ -88,5 +97,16 @@ namespace spyglass_backend.Features.Links
 
 			return links;
 		}
+
+		private static Link CreateLink(SearchLink searchLink, string selector, long averageResponseTime) => new()
+		{
+			Title = searchLink.Title,
+			Url = searchLink.Url,
+			Category = searchLink.Category,
+			Starred = searchLink.Starred,
+			SearchUrl = searchLink.SearchUrl,
+			CardSelector = selector,
+			ResponseTime = averageResponseTime
+		};
 	}
 }
