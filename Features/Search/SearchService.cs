@@ -1,9 +1,8 @@
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using AngleSharp;
-using FuzzySharp;
 using spyglass_backend.Features.Links;
+using spyglass_backend.Features.Results;
 
 namespace spyglass_backend.Features.Search
 {
@@ -17,14 +16,14 @@ namespace spyglass_backend.Features.Search
 		public IAsyncEnumerable<Result> SearchLinksAsync(string query, List<Link> links, CancellationToken cancellationToken = default)
 		{
 			var channel = Channel.CreateUnbounded<Result>();
-			var normalisedQuery = NormaliseString(query);
+			var normalisedQuery = ResultATagService.NormaliseString(query);
 
 			_ = Task.Run(async () =>
 			{
 				// Configure the parallelism options.
 				var parallelOptions = new ParallelOptions
 				{
-					MaxDegreeOfParallelism = 90 // Set your desired concurrency limit here (e.g., 10)
+					MaxDegreeOfParallelism = 80 // Set your desired concurrency limit here (e.g., 10)
 				};
 
 				try
@@ -74,115 +73,61 @@ namespace spyglass_backend.Features.Search
 			// Read response content
 			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
 			var document = await context.OpenAsync(req => req.Content(htmlResponse), cancellationToken);
-			var cards = document.QuerySelectorAll(link.Selector);
+			var cards = document.QuerySelectorAll(link.CardSelector);
 			foreach (var card in cards)
 			{
-				var aTags = card.QuerySelectorAll("a");
-				foreach (var aTag in aTags)
+				if (card.TagName.Equals("A", StringComparison.OrdinalIgnoreCase))
 				{
-					// First, validate the link's URL. This is a cheap check.
-					var absoluteUrl = ToAbsoluteUrl(link.Url, aTag.GetAttribute("href"));
-					if (absoluteUrl is null) { continue; }
+					var cardUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.GetAttribute("href"));
+					if (cardUrl == null) continue;
+					yield return CreateResult(
+						link: link,
+						title: ResultATagService.CleanTitle(card.TextContent),
+						resultUrl: cardUrl,
+						score: ResultATagService.GetRankingScore(normalisedQuery, card.TextContent),
+						year: DateTime.Now.Year.ToString(),
+						imageUrl: ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
+				}
 
-					// 1. Find the best possible title and score from within this <a> tag.
-					var bestCandidate = aTag.QuerySelectorAll("*") // Get all children
-						.Where(el => !string.Equals(el.TagName, "SCRIPT", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(el.TextContent))
-						// If the <a> tag has no children with text, we fall back to using the aTag itself.
-						.DefaultIfEmpty(aTag)
-						.Select(el => new
-						{
-							Text = CleanTitle(el.TextContent),
-							Score = GetRankingScore(normalisedQuery, NormaliseString(el.TextContent))
-						})
-						.Where(c => !string.IsNullOrWhiteSpace(c.Text))
-						.MaxBy(c => c.Score);
-
-					// 2. Now, use this single, accurate score to make a decision.
-					if (bestCandidate is not null && bestCandidate.Score >= 79)
+				var aTags = card.QuerySelectorAll("a[href]");
+				if (aTags.Length == 0) continue;
+				// Use the first <a> tag with an href attribute
+				var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, aTags[0].GetAttribute("href"));
+				if (resultUrl == null) continue;
+				string? title = null;
+				foreach (var aTag in aTags.Skip(1))
+				{
+					if (aTag.GetAttribute("href") == aTags[0].GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
 					{
-						yield return CreateResult(
-							link: link,
-							title: bestCandidate.Text,
-							resultUrl: absoluteUrl,
-							score: bestCandidate.Score,
-							year: DateTime.Now.Year.ToString(),
-							imageUrl: ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
+						title = aTag.TextContent;
+						break;
 					}
 				}
+				if (title == null)
+				{
+					if (card.QuerySelector("h1") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h1")?.TextContent.Trim()))
+						title = card.QuerySelector("h1")!.TextContent;
+					else if (card.QuerySelector("h2") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h2")?.TextContent.Trim()))
+						title = card.QuerySelector("h2")!.TextContent;
+					else if (card.QuerySelector("h3") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h3")?.TextContent.Trim()))
+						title = card.QuerySelector("h3")!.TextContent;
+					else
+						title = card.TextContent;
+				}
+				title = ResultATagService.CleanTitle(title);
+
+				var imgUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src"));
+
+				yield return CreateResult(
+					link: link,
+					title: title,
+					resultUrl: resultUrl,
+					score: ResultATagService.GetRankingScore(normalisedQuery, title),
+					year: DateTime.Now.Year.ToString(),
+					imageUrl: imgUrl);
 			}
 		}
 
-		// REGEX 1: Matches anything that ISN'T a letter, number, or space.
-		[GeneratedRegex(@"[^a-z0-9\s]")]
-		private static partial Regex PunctuationRegex();
-
-		// REGEX 2: Matches one or MORE whitespace characters in a row.
-		[GeneratedRegex(@"\s+")]
-		private static partial Regex WhitespaceRegex();
-
-		private static string NormaliseString(string input)
-		{
-			if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-
-			var lowercased = input.ToLowerInvariant();
-
-			// STEP 1: Use the first Regex to remove all punctuation.
-			var noPunctuation = PunctuationRegex().Replace(lowercased, "");
-
-			// STEP 2: Use the second Regex to clean up and standardize spaces.
-			var singleSpaced = WhitespaceRegex().Replace(noPunctuation, " ").Trim();
-
-			return singleSpaced;
-		}
-
-		private static string CleanTitle(string title)
-		{
-			if (string.IsNullOrWhiteSpace(title)) return string.Empty;
-
-			// Remove extra spaces created by phrase removal
-			title = WhitespaceRegex().Replace(title, " ").Trim();
-
-			return title;
-		}
-
-		private static string? ToAbsoluteUrl(string baseUrl, string? url)
-		{
-			// 1. Basic input validation.
-			if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(url))
-			{
-				return null;
-			}
-
-			// 2. Safely create the base Uri. This is required for resolving relative URLs.
-			if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri))
-			{
-				// The provided base URL was invalid.
-				return null;
-			}
-
-			// 3. Let the Uri class do all the intelligent work.
-			// This constructor is designed for this exact scenario and handles all cases.
-			if (Uri.TryCreate(baseUri, url, out Uri? absoluteUri))
-			{
-				return absoluteUri.AbsoluteUri;
-			}
-
-			// Return null if the combination failed for any reason (e.g., a malformed relative URL).
-			return null;
-		}
-		private static int GetRankingScore(string normalisedQuery, string normalisedTitle)
-		{
-			int score = Fuzz.WeightedRatio(normalisedQuery, normalisedTitle);
-
-			var queryWords = normalisedQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-			var titleWords = new HashSet<string>(normalisedTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-			if (queryWords.Any(queryWord => !titleWords.Contains(queryWord)))
-			{
-				score -= 1;
-			}
-
-			return score;
-		}
 		private static Result CreateResult(Link link, string title, string resultUrl, int score, string year, string? imageUrl = null)
 		{
 

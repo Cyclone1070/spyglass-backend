@@ -27,7 +27,7 @@ namespace spyglass_backend.Features.Links
 		[BsonRepresentation(BsonType.ObjectId)]
 		public string Id { get; init; } = null!;
 		[BsonElement("selector")]
-		public required string Selector { get; init; }
+		public required string CardSelector { get; init; }
 		[BsonElement("responseTime")]
 		public long ResponseTime { get; init; }
 	}

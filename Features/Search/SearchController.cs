@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using spyglass_backend.Features.Links;
+using spyglass_backend.Features.Results;
 
 namespace spyglass_backend.Features.Search
 {

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
+using spyglass_backend.Features.Results;
 using spyglass_backend.Features.Search;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,10 +61,10 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddScoped<MongoLinkService>();
 builder.Services.AddSingleton<WebsiteLinkService>();
 builder.Services.AddSingleton<SearchLinkService>();
-builder.Services.AddSingleton<ResultCardSelectorService>();
 builder.Services.AddSingleton<MegathreadService>();
 builder.Services.AddScoped<MongoResultService>();
 builder.Services.AddSingleton<SearchService>();
+builder.Services.AddSingleton<WebService>();
 
 var app = builder.Build();
 
