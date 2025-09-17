@@ -67,7 +67,29 @@ namespace spyglass_backend.Features.Links
 					var noResultUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_rules.CardFindingQueries.InvalidQuery));
 					var (noResultDoc, noResultResponseTime) = await _webService.GetHtmlDocumentAsync(noResultUrl);
 					var noResultBlacklist = noResultDoc.All
-						.Select(WebService.GetElementSelector)
+						.Select(e =>
+						{
+							if (e.ParentElement == null) return new ElementSelector
+							{
+								Parent = string.Empty,
+								Element = string.Empty,
+							};
+							var baseElementSelector = WebService.GetElementSelector(e);
+							var fullParentPath = WebService.GetTagPath(noResultDoc.DocumentElement, e.ParentElement);
+							if (string.IsNullOrEmpty(fullParentPath))
+							{
+								return new ElementSelector
+								{
+									Parent = string.Empty,
+									Element = string.Empty,
+								};
+							}
+							return new ElementSelector
+							{
+								Parent = fullParentPath,
+								Element = baseElementSelector.Element
+							};
+						})
 						.Where(s => !string.IsNullOrEmpty(s.Element)) // Filter out empty selectors
 						.ToHashSet();
 
