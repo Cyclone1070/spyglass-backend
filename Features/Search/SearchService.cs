@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using AngleSharp;
 using spyglass_backend.Features.Links;
-using spyglass_backend.Features.Results;
+using spyglass_backend.Features.WebUtils;
 
 namespace spyglass_backend.Features.Search
 {
@@ -23,7 +23,7 @@ namespace spyglass_backend.Features.Search
 				// Configure the parallelism options.
 				var parallelOptions = new ParallelOptions
 				{
-					MaxDegreeOfParallelism = 80 // Set your desired concurrency limit here (e.g., 10)
+					MaxDegreeOfParallelism = 50 // Set your desired concurrency limit here (e.g., 10)
 				};
 
 				try
@@ -94,35 +94,53 @@ namespace spyglass_backend.Features.Search
 				// Use the first <a> tag with an href attribute
 				var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, aTags[0].GetAttribute("href"));
 				if (resultUrl == null) continue;
-				string? title = null;
+				string? rawTitle = null;
 				foreach (var aTag in aTags.Skip(1))
 				{
 					if (aTag.GetAttribute("href") == aTags[0].GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
 					{
-						title = aTag.TextContent;
+						rawTitle = aTag.TextContent;
 						break;
 					}
 				}
-				if (title == null)
+				if (rawTitle == null)
 				{
 					if (card.QuerySelector("h1") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h1")?.TextContent.Trim()))
-						title = card.QuerySelector("h1")!.TextContent;
+						rawTitle = card.QuerySelector("h1")!.TextContent;
 					else if (card.QuerySelector("h2") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h2")?.TextContent.Trim()))
-						title = card.QuerySelector("h2")!.TextContent;
+						rawTitle = card.QuerySelector("h2")!.TextContent;
 					else if (card.QuerySelector("h3") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h3")?.TextContent.Trim()))
-						title = card.QuerySelector("h3")!.TextContent;
+						rawTitle = card.QuerySelector("h3")!.TextContent;
 					else
-						title = card.TextContent;
+						rawTitle = card.TextContent;
 				}
-				title = ResultATagService.CleanTitle(title);
+				string normalisedTitle = ResultATagService.NormaliseString(rawTitle);
+				int titleScore = ResultATagService.GetRankingScore(normalisedQuery, normalisedTitle);
+
+				string extractedUrl = ResultATagService.ExtractUrlPath(resultUrl);
+				int urlScore = ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(extractedUrl));
+
+				string finalTitle;
+				int finalScore;
+
+				if (urlScore > titleScore)
+				{
+					finalTitle = ResultATagService.CleanTitle(extractedUrl);
+					finalScore = urlScore;
+				}
+				else
+				{
+					finalTitle = ResultATagService.CleanTitle(rawTitle);
+					finalScore = titleScore;
+				}
 
 				var imgUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src"));
 
 				yield return CreateResult(
 					link: link,
-					title: title,
+					title: finalTitle,
 					resultUrl: resultUrl,
-					score: ResultATagService.GetRankingScore(normalisedQuery, title),
+					score: finalScore,
 					year: DateTime.Now.Year.ToString(),
 					imageUrl: imgUrl);
 			}

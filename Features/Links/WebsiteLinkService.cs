@@ -81,7 +81,6 @@ namespace spyglass_backend.Features.Links
 				return false;
 
 			var linkUrl = linkElement.GetAttribute("href");
-			var parentLiText = parentLi.TextContent;
 
 			if (string.IsNullOrWhiteSpace(linkUrl))
 				return false;
@@ -89,9 +88,7 @@ namespace spyglass_backend.Features.Links
 			// Use LINQ's .Any() for a clean, case-insensitive keyword check.
 			return !_rules.SkipKeywords.Any(keyword =>
 				linkUrl.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-				parentLiText.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+				linkElement.TextContent.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 		}
-
-
 	}
 }

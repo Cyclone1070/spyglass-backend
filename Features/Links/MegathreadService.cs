@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Web;
 using Microsoft.Extensions.Options;
 using spyglass_backend.Configuration;
-using spyglass_backend.Features.Results;
+using spyglass_backend.Features.WebUtils;
 
 namespace spyglass_backend.Features.Links
 {
@@ -47,12 +47,13 @@ namespace spyglass_backend.Features.Links
 			// 1. Configure the parallelism options.
 			var parallelOptions = new ParallelOptions
 			{
-				MaxDegreeOfParallelism = 80 // Set your concurrency limit here
+				MaxDegreeOfParallelism = 50 // Set your concurrency limit here
 			};
 
 			// 2. Use Parallel.ForEachAsync to iterate and process the collection.
 			await Parallel.ForEachAsync(websiteLinks, parallelOptions, async (websiteLink, cancellationToken) =>
 			{
+				_logger.LogDebug("Processing website link: {Url}", websiteLink.Url);
 				try
 				{
 					var searchLink = await _searchLinkService.ScrapeSearchLinksAsync(websiteLink);
@@ -79,6 +80,7 @@ namespace spyglass_backend.Features.Links
 					var resultCardSelector = ResultCardService.FindResultCardSelector(noResultBlacklist, withResultsDoc1, withResultsDoc2);
 
 					finalLinks.Add(CreateLink(searchLink, resultCardSelector.ToString(), averageResponseTime));
+					_logger.LogInformation("Successfully processed {Url}", websiteLink.Url);
 				}
 				catch (InvalidOperationException e)
 				{
