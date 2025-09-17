@@ -20,7 +20,7 @@ namespace spyglass_backend.Features.Search
 		public IAsyncEnumerable<Result> SearchLinksAsync(string query, List<Link> links, CancellationToken cancellationToken = default)
 		{
 			var channel = Channel.CreateUnbounded<Result>();
-			var normalisedQuery = ResultATagService.NormaliseString(query);
+			string normalisedQuery = ResultATagService.NormaliseString(query);
 
 			_ = Task.Run(async () =>
 			{
@@ -137,7 +137,7 @@ namespace spyglass_backend.Features.Search
 						title: ResultATagService.CleanTitle(card.TextContent),
 						resultUrl: cardUrl,
 						score: ResultATagService.GetRankingScore(normalisedQuery, card.TextContent),
-						year: DateTime.Now.Year.ToString(),
+						year: ResultCardService.ExtractYear(card.TextContent),
 						imageUrl: ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
 					continue;
 				}
@@ -220,75 +220,29 @@ namespace spyglass_backend.Features.Search
 					finalScore = titleScore;
 				}
 
-				// Extract image URL if available
-				var imgUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src"));
-
-				if (link.Url == "https://moviehd.us")
-				{
-					_logger.LogDebug($"MovieHD.us - Title: {rawTitle}, NormalisedTitle: {normalisedTitle}, TitleScore: {titleScore}, ExtractedUrl: {extractedUrl}, UrlScore: {urlScore}",
-						rawTitle, normalisedTitle, titleScore, extractedUrl, urlScore);
-				}
-
 				yield return CreateResult(
 					link: link,
 					title: finalTitle,
 					resultUrl: resultUrl,
 					score: finalScore,
-					year: DateTime.Now.Year.ToString(),
-					imageUrl: imgUrl);
+					year: ResultCardService.ExtractYear(card.TextContent),
+					imageUrl: ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
 			}
 		}
 
-		private static Result CreateResult(Link link, string title, string resultUrl, int score, string year, string? imageUrl = null)
+		private static Result CreateResult(Link link, string title, string resultUrl, int score, int? year, string? imageUrl = null)
 		{
-
-			return link.Category switch
+			return new Result
 			{
-				"Books" => new BookResult
-				{
-					Title = title,
-					ResultUrl = resultUrl,
-					WebsiteUrl = link.Url,
-					WebsiteTitle = link.Title,
-					WebsiteStarred = link.Starred,
-					Score = score,
-					Year = year,
-					ImageUrl = imageUrl
-				},
-				"Movies" => new MovieResult
-				{
-					Title = title,
-					ResultUrl = resultUrl,
-					WebsiteUrl = link.Url,
-					WebsiteTitle = link.Title,
-					WebsiteStarred = link.Starred,
-					Score = score,
-					Year = year,
-					ImageUrl = imageUrl
-				},
-				"Games Download" => new GameResult
-				{
-					Title = title,
-					ResultUrl = resultUrl,
-					WebsiteUrl = link.Url,
-					WebsiteTitle = link.Title,
-					WebsiteStarred = link.Starred,
-					Score = score,
-					Year = year,
-					ImageUrl = imageUrl
-				},
-				// The underscore _ is the equivalent of the 'default' case
-				_ => new Result
-				{
-					Title = title,
-					ResultUrl = resultUrl,
-					WebsiteUrl = link.Url,
-					WebsiteTitle = link.Title,
-					WebsiteStarred = link.Starred,
-					Score = score,
-					Year = year,
-					ImageUrl = imageUrl
-				}
+				Title = title,
+				ResultUrl = resultUrl,
+				WebsiteTitle = link.Title,
+				WebsiteUrl = link.Url,
+				WebsiteStarred = link.Starred,
+				Score = score,
+				Year = year,
+				Category = link.Category,
+				ImageUrl = imageUrl
 			};
 		}
 	}
