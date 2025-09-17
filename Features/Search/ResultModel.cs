@@ -20,7 +20,6 @@ namespace spyglass_backend.Features.Search
 		public required string WebsiteUrl { get; init; }
 		[BsonElement("websiteStarred")]
 		public required bool WebsiteStarred { get; init; }
-
 		[BsonElement("score")]
 		public required int Score { get; init; }
 		[BsonElement("year")]
@@ -28,6 +27,20 @@ namespace spyglass_backend.Features.Search
 		[BsonElement("imageUrl")]
 		public string? ImageUrl { get; init; }
 	};
+
+	public record ResultDto
+	{
+		public required string Title { get; init; }
+		public required string ResultUrl { get; init; }
+		public required string Category { get; init; }
+		public required string WebsiteTitle { get; init; }
+		public required string WebsiteUrl { get; init; }
+		public required bool WebsiteStarred { get; init; }
+		public required int Score { get; init; }
+		public int? Year { get; init; }
+		public string? ImageUrl { get; init; }
+	}
+
 	public record StoredResult
 	{
 		[BsonId]
