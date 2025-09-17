@@ -113,7 +113,7 @@ namespace spyglass_backend.Features.WebUtils
 			}
 
 			// Rule 3: The text is a common pagination keyword or symbol.
-			string[] paginationKeywords = ["next", "prev", "previous", "last", "first", ">", "<", "»", "«"];
+			string[] paginationKeywords = ["next", "next page", "next results", "more results", "more", "prev", "previous", "last", "first", ">", "<", "»", "«"];
 			return paginationKeywords.Any(key => text.Equals(key, StringComparison.OrdinalIgnoreCase));
 		}
 	}

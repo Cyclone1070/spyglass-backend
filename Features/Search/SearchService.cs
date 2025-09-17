@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using AngleSharp;
+using Microsoft.Extensions.Options;
+using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
 using spyglass_backend.Features.WebUtils;
 
@@ -8,9 +10,11 @@ namespace spyglass_backend.Features.Search
 {
 	public partial class SearchService(
 			ILogger<SearchService> logger,
+			IOptions<ScraperRules> rules,
 			IHttpClientFactory httpClientFactory)
 	{
 		private readonly ILogger<SearchService> _logger = logger;
+		private readonly ScraperRules _rules = rules.Value;
 		private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
 		public IAsyncEnumerable<Result> SearchLinksAsync(string query, List<Link> links, CancellationToken cancellationToken = default)
@@ -74,12 +78,60 @@ namespace spyglass_backend.Features.Search
 			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
 			var document = await context.OpenAsync(req => req.Content(htmlResponse), cancellationToken);
 			var cards = document.QuerySelectorAll(link.CardSelector);
+
+			// 1. Create a dictionary to count how many DISTINCT cards each href appears in.
+			var hrefToDistinctCardCount = new Dictionary<string, int>();
+
 			foreach (var card in cards)
 			{
+				// Get all <a> tags with href attributes within the current card
+				var aTagsInCard = card.QuerySelectorAll("a[href]");
+
+				// Extract all UNIQUE hrefs WITHIN THIS specific card
+				// This ensures that if an href appears multiple times in the same card, it's counted only once for that card.
+				var distinctHrefsInCurrentCard = aTagsInCard
+					.Select(a => a.GetAttribute("href"))
+					.Where(href => href != null)
+					.Select(href => href!) // Non-nullable now
+					.Distinct() // Only count each href once PER CARD
+					.ToList();
+
+				// For each unique href found in this card, increment its count in the dictionary
+				foreach (var href in distinctHrefsInCurrentCard)
+				{
+					// Use TryGetValue to avoid double lookup and handle potential missing keys gracefully
+					if (hrefToDistinctCardCount.TryGetValue(href, out int count))
+					{
+						hrefToDistinctCardCount[href] = count + 1;
+					}
+					else
+					{
+						hrefToDistinctCardCount[href] = 1;
+					}
+				}
+			}
+
+			// 2. Determine which hrefs are truly unique across ALL cards (i.e., they appeared in only ONE distinct card).
+			var uniqueUrlsAcrossCards = hrefToDistinctCardCount
+										.Where(pair => pair.Value == 1) // Keep hrefs that appeared in exactly one distinct card
+										.Select(pair => pair.Key) // Get the unique href string
+										.ToHashSet(); // Store in a HashSet for efficient lookup			
+
+			foreach (var card in cards)
+			{
+				// Handle the case where the card itself is an <a> tag
 				if (card.TagName.Equals("A", StringComparison.OrdinalIgnoreCase))
 				{
-					var cardUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.GetAttribute("href"));
+					string? currentCardHref = card.GetAttribute("href");
+					if (currentCardHref == null || !uniqueUrlsAcrossCards.Contains(currentCardHref))
+					{
+						_logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
+						continue; // Skip this card if its href is not unique or missing 
+					}
+
+					string? cardUrl = ResultATagService.ToAbsoluteUrl(link.Url, currentCardHref);
 					if (cardUrl == null) continue;
+
 					yield return CreateResult(
 						link: link,
 						title: ResultATagService.CleanTitle(card.TextContent),
@@ -87,22 +139,55 @@ namespace spyglass_backend.Features.Search
 						score: ResultATagService.GetRankingScore(normalisedQuery, card.TextContent),
 						year: DateTime.Now.Year.ToString(),
 						imageUrl: ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
+					continue;
 				}
 
 				var aTags = card.QuerySelectorAll("a[href]");
 				if (aTags.Length == 0) continue;
 				// Use the first <a> tag with an href attribute
-				var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, aTags[0].GetAttribute("href"));
-				if (resultUrl == null) continue;
-				string? rawTitle = null;
-				foreach (var aTag in aTags.Skip(1))
+				var firstUniqueATag = aTags
+					.Where(a =>
+					{
+						// check for category links
+						var currentUrl = a.GetAttribute("href");
+						if (string.IsNullOrWhiteSpace(currentUrl))
+						{
+							return false;
+						}
+						var segments = currentUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
+						if (segments.Length < 2)
+						{
+							return true; // Not enough segments to determine category, assume valid
+						}
+						var secondToLastSegment = segments[^2];
+
+						return !_rules.SearchSkipKeywords.Any(keyword => secondToLastSegment.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+					})
+					.FirstOrDefault(a =>
 				{
-					if (aTag.GetAttribute("href") == aTags[0].GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
+					var href = a.GetAttribute("href");
+					return href != null && uniqueUrlsAcrossCards.Contains(href);
+				});
+				if (firstUniqueATag == null)
+				{
+					_logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
+					continue;
+				}
+
+				var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, firstUniqueATag.GetAttribute("href"));
+				if (resultUrl == null) continue;
+
+				// Attempt to find a better title from other <a> tags or headings within the card
+				string? rawTitle = null;
+				foreach (var aTag in aTags)
+				{
+					if (aTag.GetAttribute("href") == firstUniqueATag.GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
 					{
 						rawTitle = aTag.TextContent;
 						break;
 					}
 				}
+				// If no suitable <a> tag text found, look for headings or fallback to card text
 				if (rawTitle == null)
 				{
 					if (card.QuerySelector("h1") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h1")?.TextContent.Trim()))
@@ -114,6 +199,7 @@ namespace spyglass_backend.Features.Search
 					else
 						rawTitle = card.TextContent;
 				}
+				// Score the title vs URL and pick the better one
 				string normalisedTitle = ResultATagService.NormaliseString(rawTitle);
 				int titleScore = ResultATagService.GetRankingScore(normalisedQuery, normalisedTitle);
 
@@ -134,6 +220,7 @@ namespace spyglass_backend.Features.Search
 					finalScore = titleScore;
 				}
 
+				// Extract image URL if available
 				var imgUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src"));
 
 				yield return CreateResult(
