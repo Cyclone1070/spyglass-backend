@@ -86,7 +86,7 @@ namespace spyglass_backend.Features.Links
 				return false;
 
 			// Use LINQ's .Any() for a clean, case-insensitive keyword check.
-			return !_rules.SkipKeywords.Any(keyword =>
+			return !_rules.MegathreadSkipKeywords.Any(keyword =>
 				linkUrl.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
 				linkElement.TextContent.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 		}
