@@ -135,12 +135,9 @@ namespace spyglass_backend.Features.WebUtils
 			return InvalidCssCharRegex().Replace(identifier, @"\$&");
 		}
 
-		public static string? GetTagPath(IElement? parent, IElement? child)
+		// Generates a CSS selector path from a parent element to a child element, excluding the parent itself.
+		public static string? GetTagPath(IElement parent, IElement child)
 		{
-			if (parent == null || child == null)
-			{
-				throw new InvalidOperationException("Parent and child elements cannot be null.");
-			}
 			// If the child is the parent, there's no path.
 			if (parent == child)
 			{

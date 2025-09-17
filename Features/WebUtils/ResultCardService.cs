@@ -25,7 +25,21 @@ namespace spyglass_backend.Features.WebUtils
 		{
 			// Filter elements to only those present in the 'diff' selector set.
 			var candidateElements = withResultsDoc.All
-					.Where(el => el.ParentElement != null && !blacklist.Contains(WebService.GetElementSelector(el)))
+					.Where(e =>
+							{
+								if (e.ParentElement == null) return false;
+
+								var baseElementSelector = WebService.GetElementSelector(e);
+								var fullParentPath = WebService.GetTagPath(withResultsDoc.DocumentElement, e.ParentElement);
+								if (string.IsNullOrEmpty(fullParentPath)) return false;
+								var fullSelector = new ElementSelector
+								{
+									Parent = fullParentPath,
+									Element = baseElementSelector.Element
+								};
+
+								return !blacklist.Contains(fullSelector);
+							})
 					.ToList();
 			var validPatterns = candidateElements
 				.GroupBy(el => el.ParentElement) // Group siblings together

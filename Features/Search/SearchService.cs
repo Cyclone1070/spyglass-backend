@@ -59,12 +59,12 @@ namespace spyglass_backend.Features.Search
 				}
 				finally
 				{
-					// === SECTION 4: Announce the Shift is Over ===
+					// Signal that no more items will be written to the channel
 					channel.Writer.Complete();
 				}
 			}, cancellationToken);
 
-			// === SECTION 5: Give the Packer the End of the Conveyor Belt ===
+			// Return the reader side of the channel as an async enumerable
 			return channel.Reader.ReadAllAsync(cancellationToken);
 		}
 
@@ -222,6 +222,12 @@ namespace spyglass_backend.Features.Search
 
 				// Extract image URL if available
 				var imgUrl = ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src"));
+
+				if (link.Url == "https://moviehd.us")
+				{
+					_logger.LogDebug($"MovieHD.us - Title: {rawTitle}, NormalisedTitle: {normalisedTitle}, TitleScore: {titleScore}, ExtractedUrl: {extractedUrl}, UrlScore: {urlScore}",
+						rawTitle, normalisedTitle, titleScore, extractedUrl, urlScore);
+				}
 
 				yield return CreateResult(
 					link: link,

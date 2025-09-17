@@ -60,7 +60,7 @@ namespace spyglass_backend.Features.WebUtils
 				return string.Empty; // Not a valid URL
 			}
 
-			string fullPath = uri.AbsolutePath;
+			string fullPath = uri.AbsolutePath.TrimEnd('/');
 
 			// Get the last segment of the path
 			// Path.GetFileName handles trimming leading/trailing slashes implicitly for the segment it returns.
