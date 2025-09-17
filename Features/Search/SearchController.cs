@@ -23,7 +23,7 @@ namespace spyglass_backend.Features.Search
 			_logger.LogInformation("Received request to search.");
 			var cancellationToken = HttpContext.RequestAborted;
 
-			async IAsyncEnumerable<Result> StreamAndSaveSearchResults()
+			async IAsyncEnumerable<ResultDto> StreamAndSaveSearchResults()
 			{
 				var cachedResult = await _mongoResultService.GetAsync(q);
 				if (cachedResult != null)
@@ -31,7 +31,18 @@ namespace spyglass_backend.Features.Search
 					_logger.LogInformation("Returning cached results for query: {Query}", q);
 					foreach (var result in cachedResult.Results)
 					{
-						yield return result;
+						yield return new ResultDto
+						{
+							Title = result.Title,
+							ResultUrl = result.ResultUrl,
+							Category = result.Category,
+							WebsiteTitle = result.WebsiteTitle,
+							WebsiteUrl = result.WebsiteUrl,
+							WebsiteStarred = result.WebsiteStarred,
+							Score = result.Score,
+							Year = result.Year,
+							ImageUrl = result.ImageUrl
+						};
 					}
 					yield break;
 				}
@@ -42,7 +53,18 @@ namespace spyglass_backend.Features.Search
 				await foreach (var result in resultStream.WithCancellation(cancellationToken))
 				{
 					results.Add(result);
-					yield return result;
+					yield return new ResultDto
+					{
+						Title = result.Title,
+						ResultUrl = result.ResultUrl,
+						Category = result.Category,
+						WebsiteTitle = result.WebsiteTitle,
+						WebsiteUrl = result.WebsiteUrl,
+						WebsiteStarred = result.WebsiteStarred,
+						Score = result.Score,
+						Year = result.Year,
+						ImageUrl = result.ImageUrl
+					};
 				}
 
 				if (!cancellationToken.IsCancellationRequested)
@@ -62,7 +84,7 @@ namespace spyglass_backend.Features.Search
 				}
 			}
 
-			return new NdjsonStreamResult<Result>(StreamAndSaveSearchResults());
+			return new NdjsonStreamResult<ResultDto>(StreamAndSaveSearchResults());
 		}
 	}
 }
