@@ -2,7 +2,7 @@ using spyglass_backend.Features.Links;
 
 using AngleSharp.Dom;
 
-namespace spyglass_backend.Features.Results
+namespace spyglass_backend.Features.WebUtils
 {
 	public partial class ResultCardService
 	{

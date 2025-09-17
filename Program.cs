@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
-using spyglass_backend.Features.Results;
+using spyglass_backend.Features.WebUtils;
 using spyglass_backend.Features.Search;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,17 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 // Configure logging filter in development environment
-if (builder.Environment.IsDevelopment())
-{
-	builder.Logging.AddFilter((provider, category, logLevel) =>
-	{
-		if (logLevel != LogLevel.Debug && logLevel != LogLevel.Warning)
-		{
-			return false;
-		}
-		return true;
-	});
-}
+// if (builder.Environment.IsDevelopment())
+// {
+// 	builder.Logging.AddFilter((provider, category, logLevel) =>
+// 	{
+// 		if (logLevel != LogLevel.Debug && logLevel != LogLevel.Warning)
+// 		{
+// 			return false;
+// 		}
+// 		return true;
+// 	});
+// }
 
 // Add services to the container.
 

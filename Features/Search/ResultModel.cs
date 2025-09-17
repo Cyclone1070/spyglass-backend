@@ -1,7 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace spyglass_backend.Features.Results
+namespace spyglass_backend.Features.Search
 {
 	[BsonKnownTypes(typeof(BookResult), typeof(MovieResult), typeof(GameResult))]
 	public record Result

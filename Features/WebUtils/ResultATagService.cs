@@ -1,14 +1,14 @@
 using System.Text.RegularExpressions;
 using FuzzySharp;
 
-namespace spyglass_backend.Features.Results
+namespace spyglass_backend.Features.WebUtils
 {
 	public partial class ResultATagService
 	{
 		// Find the most likely title
 		public static int GetRankingScore(string normalisedQuery, string normalisedTitle)
 		{
-			int score = Fuzz.PartialTokenSetRatio(normalisedQuery, normalisedTitle);
+			int score = Fuzz.WeightedRatio(normalisedQuery, normalisedTitle);
 
 			var queryWords = normalisedQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 			var titleWords = new HashSet<string>(normalisedTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries));
@@ -49,6 +49,35 @@ namespace spyglass_backend.Features.Results
 			var singleSpaced = CleanTitle(noPunctuation);
 
 			return singleSpaced;
+		}
+
+		public static string ExtractUrlPath(string resultUrl)
+		{
+			if (string.IsNullOrWhiteSpace(resultUrl)) return string.Empty;
+
+			if (!Uri.TryCreate(resultUrl, UriKind.Absolute, out Uri? uri))
+			{
+				return string.Empty; // Not a valid URL
+			}
+
+			string fullPath = uri.AbsolutePath;
+
+			// Get the last segment of the path
+			// Path.GetFileName handles trimming leading/trailing slashes implicitly for the segment it returns.
+			string lastSegment = Path.GetFileName(fullPath);
+
+			if (string.IsNullOrWhiteSpace(lastSegment))
+			{
+				return string.Empty; // No meaningful last segment
+			}
+
+			// Replace common URL separators with spaces to treat them as word boundaries
+			// Example: "batman-arkham-knight" -> "batman arkham knight"
+			lastSegment = lastSegment.Replace('-', ' ').Replace('_', ' ');
+
+			// Now apply the general string normalization which handles lowercasing,
+			// removes any remaining non-alphanumeric/non-space characters, and standardizes spaces.
+			return lastSegment;
 		}
 
 		// Cleans up title by removing extra spaces created by phrase removal

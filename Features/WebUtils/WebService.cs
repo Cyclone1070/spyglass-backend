@@ -4,8 +4,9 @@ using System.Text.RegularExpressions;
 using AngleSharp;
 
 using AngleSharp.Dom;
+using spyglass_backend.Features.Links;
 
-namespace spyglass_backend.Features.Links
+namespace spyglass_backend.Features.WebUtils
 {
 	public partial class WebService(
 		IHttpClientFactory httpClientFactory)
