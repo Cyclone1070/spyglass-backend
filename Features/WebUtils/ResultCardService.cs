@@ -136,7 +136,7 @@ namespace spyglass_backend.Features.WebUtils
 		[GeneratedRegex(@"\b(19|20)\d{2}\b")]
 		private static partial Regex YearRegex();
 		// Extracts the first four-digit year (19xx or 20xx) found in the input string.
-		public static int? ExtractYear(string content)
+		public static int? GetYear(string content)
 		{
 			if (string.IsNullOrWhiteSpace(content)) return null;
 
@@ -150,6 +150,25 @@ namespace spyglass_backend.Features.WebUtils
 			}
 
 			return null;
+		}
+		public static string? GetImageUrlFromElement(string baseUrl, IElement? imgElement)
+		{
+			if (imgElement == null) return null;
+
+			// Prioritized list of attributes to check for an image URL.
+			string[] imageUrlAttributes = ["data-src", "src", "data-original", "data-image"];
+
+			foreach (var attrName in imageUrlAttributes)
+			{
+				string? imgUrl = imgElement.GetAttribute(attrName);
+
+				if (!string.IsNullOrWhiteSpace(imgUrl))
+				{
+					return ResultATagService.ToAbsoluteUrl(baseUrl, imgUrl!);
+				}
+			}
+
+			return null; // No valid image URL found in any of the specified attributes.
 		}
 	}
 }
