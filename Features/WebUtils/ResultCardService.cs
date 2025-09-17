@@ -1,6 +1,7 @@
 using spyglass_backend.Features.Links;
 
 using AngleSharp.Dom;
+using System.Text.RegularExpressions;
 
 namespace spyglass_backend.Features.WebUtils
 {
@@ -129,6 +130,26 @@ namespace spyglass_backend.Features.WebUtils
 			// Rule 3: The text is a common pagination keyword or symbol.
 			string[] paginationKeywords = ["next", "next page", "next results", "more results", "more", "prev", "previous", "last", "first", ">", "<", "»", "«"];
 			return paginationKeywords.Any(key => text.Equals(key, StringComparison.OrdinalIgnoreCase));
+		}
+
+		// REGEX for extracting a four-digit year (19xx or 20xx)
+		[GeneratedRegex(@"\b(19|20)\d{2}\b")]
+		private static partial Regex YearRegex();
+		// Extracts the first four-digit year (19xx or 20xx) found in the input string.
+		public static int? ExtractYear(string content)
+		{
+			if (string.IsNullOrWhiteSpace(content)) return null;
+
+			// Get the first match of the year regex
+			var match = YearRegex().Match(content);
+
+			// If a match is found and can be parsed as an int, return it. Otherwise, return null.
+			if (match.Success && int.TryParse(match.Value, out int yearValue))
+			{
+				return yearValue;
+			}
+
+			return null;
 		}
 	}
 }
