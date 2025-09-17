@@ -94,20 +94,21 @@ namespace spyglass_backend.Features.WebUtils
 		// Converts a possibly relative URL to an absolute URL based on the provided base URL.
 		public static string? ToAbsoluteUrl(string baseUrl, string? url)
 		{
-			// 1. Basic input validation.
+			// Basic input validation.
 			if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(url))
 			{
 				return null;
 			}
 
-			// 2. Safely create the base Uri. This is required for resolving relative URLs.
+			// Safely create the base Uri. This is required for resolving relative URLs.
 			if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? baseUri))
 			{
 				// The provided base URL was invalid.
 				return null;
 			}
 
-			// 3. Let the Uri class do all the intelligent work.
+
+			// Let the Uri class do all the intelligent work.
 			// This constructor is designed for this exact scenario and handles all cases.
 			if (Uri.TryCreate(baseUri, url, out Uri? absoluteUri))
 			{

@@ -136,9 +136,9 @@ namespace spyglass_backend.Features.Search
 						link: link,
 						title: ResultATagService.CleanTitle(card.TextContent),
 						resultUrl: cardUrl,
-						score: ResultATagService.GetRankingScore(normalisedQuery, card.TextContent),
-						year: ResultCardService.ExtractYear(card.TextContent),
-						imageUrl: ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
+						score: ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(card.TextContent)),
+						year: ResultCardService.GetYear(card.TextContent),
+						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, card.QuerySelector("img")));
 					continue;
 				}
 
@@ -225,8 +225,8 @@ namespace spyglass_backend.Features.Search
 					title: finalTitle,
 					resultUrl: resultUrl,
 					score: finalScore,
-					year: ResultCardService.ExtractYear(card.TextContent),
-					imageUrl: ResultATagService.ToAbsoluteUrl(link.Url, card.QuerySelector("img")?.GetAttribute("src")));
+					year: ResultCardService.GetYear(card.TextContent),
+					imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, card.QuerySelector("img")));
 			}
 		}
 
