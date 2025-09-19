@@ -41,7 +41,8 @@ namespace spyglass_backend.Features.Search
 							WebsiteStarred = result.WebsiteStarred,
 							Score = result.Score,
 							Year = result.Year,
-							ImageUrl = result.ImageUrl
+							ImageUrl = result.ImageUrl,
+							AltText = result.AltText
 						};
 					}
 					yield break;
@@ -63,7 +64,8 @@ namespace spyglass_backend.Features.Search
 						WebsiteStarred = result.WebsiteStarred,
 						Score = result.Score,
 						Year = result.Year,
-						ImageUrl = result.ImageUrl
+						ImageUrl = result.ImageUrl,
+						AltText = result.AltText
 					};
 				}
 

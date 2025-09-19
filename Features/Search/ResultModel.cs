@@ -26,6 +26,8 @@ namespace spyglass_backend.Features.Search
 		public int? Year { get; init; }
 		[BsonElement("imageUrl")]
 		public string? ImageUrl { get; init; }
+		[BsonElement("altText")]
+		public string? AltText { get; init; }
 	};
 
 	public record ResultDto
@@ -39,6 +41,8 @@ namespace spyglass_backend.Features.Search
 		public required int Score { get; init; }
 		public int? Year { get; init; }
 		public string? ImageUrl { get; init; }
+		public string? AltText { get; init; }
+
 	}
 
 	public record StoredResult

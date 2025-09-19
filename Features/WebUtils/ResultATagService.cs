@@ -88,7 +88,7 @@ namespace spyglass_backend.Features.WebUtils
 			// Remove extra spaces created by phrase removal
 			title = WhitespaceRegex().Replace(title, " ").Trim();
 
-			return title;
+			return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(title.ToLower());
 		}
 
 		// Converts a possibly relative URL to an absolute URL based on the provided base URL.

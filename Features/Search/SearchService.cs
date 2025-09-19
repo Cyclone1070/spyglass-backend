@@ -129,108 +129,117 @@ namespace spyglass_backend.Features.Search
 						continue; // Skip this card if its href is not unique or missing 
 					}
 
-					string? cardUrl = ResultATagService.ToAbsoluteUrl(link.Url, currentCardHref);
-					if (cardUrl == null) continue;
+					string? resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, currentCardHref);
+					if (resultUrl == null) continue;
+
+					var imgElement = card.QuerySelector("img");
 
 					yield return CreateResult(
 						link: link,
 						title: ResultATagService.CleanTitle(card.TextContent),
-						resultUrl: cardUrl,
+						resultUrl: resultUrl,
 						score: ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(card.TextContent)),
 						year: ResultCardService.GetYear(card.TextContent),
-						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, card.QuerySelector("img")));
+						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
+						altText: imgElement?.GetAttribute("alt")
+						);
 					continue;
-				}
-
-				var aTags = card.QuerySelectorAll("a[href]");
-				if (aTags.Length == 0) continue;
-				// Use the first <a> tag with an href attribute
-				var firstUniqueATag = aTags
-					.Where(a =>
-					{
-						// check for category links
-						var currentUrl = a.GetAttribute("href");
-						if (string.IsNullOrWhiteSpace(currentUrl))
-						{
-							return false;
-						}
-						var segments = currentUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
-						if (segments.Length < 2)
-						{
-							return true; // Not enough segments to determine category, assume valid
-						}
-						var secondToLastSegment = segments[^2];
-
-						return !_rules.SearchSkipKeywords.Any(keyword => secondToLastSegment.Contains(keyword, StringComparison.OrdinalIgnoreCase));
-					})
-					.FirstOrDefault(a =>
-				{
-					var href = a.GetAttribute("href");
-					return href != null && uniqueUrlsAcrossCards.Contains(href);
-				});
-				if (firstUniqueATag == null)
-				{
-					_logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
-					continue;
-				}
-
-				var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, firstUniqueATag.GetAttribute("href"));
-				if (resultUrl == null) continue;
-
-				// Attempt to find a better title from other <a> tags or headings within the card
-				string? rawTitle = null;
-				foreach (var aTag in aTags)
-				{
-					if (aTag.GetAttribute("href") == firstUniqueATag.GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
-					{
-						rawTitle = aTag.TextContent;
-						break;
-					}
-				}
-				// If no suitable <a> tag text found, look for headings or fallback to card text
-				if (rawTitle == null)
-				{
-					if (card.QuerySelector("h1") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h1")?.TextContent.Trim()))
-						rawTitle = card.QuerySelector("h1")!.TextContent;
-					else if (card.QuerySelector("h2") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h2")?.TextContent.Trim()))
-						rawTitle = card.QuerySelector("h2")!.TextContent;
-					else if (card.QuerySelector("h3") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h3")?.TextContent.Trim()))
-						rawTitle = card.QuerySelector("h3")!.TextContent;
-					else
-						rawTitle = card.TextContent;
-				}
-				// Score the title vs URL and pick the better one
-				string normalisedTitle = ResultATagService.NormaliseString(rawTitle);
-				int titleScore = ResultATagService.GetRankingScore(normalisedQuery, normalisedTitle);
-
-				string extractedUrl = ResultATagService.ExtractUrlPath(resultUrl);
-				int urlScore = ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(extractedUrl));
-
-				string finalTitle;
-				int finalScore;
-
-				if (urlScore > titleScore)
-				{
-					finalTitle = ResultATagService.CleanTitle(extractedUrl);
-					finalScore = urlScore;
 				}
 				else
 				{
-					finalTitle = ResultATagService.CleanTitle(rawTitle);
-					finalScore = titleScore;
-				}
+					var aTags = card.QuerySelectorAll("a[href]");
+					if (aTags.Length == 0) continue;
+					// Use the first <a> tag with an href attribute
+					var firstUniqueATag = aTags
+						.Where(a =>
+						{
+							// check for category links
+							var currentUrl = a.GetAttribute("href");
+							if (string.IsNullOrWhiteSpace(currentUrl))
+							{
+								return false;
+							}
+							var segments = currentUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
+							if (segments.Length < 2)
+							{
+								return true; // Not enough segments to determine category, assume valid
+							}
+							var secondToLastSegment = segments[^2];
 
-				yield return CreateResult(
-					link: link,
-					title: finalTitle,
-					resultUrl: resultUrl,
-					score: finalScore,
-					year: ResultCardService.GetYear(card.TextContent),
-					imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, card.QuerySelector("img")));
+							return !_rules.SearchSkipKeywords.Any(keyword => secondToLastSegment.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+						})
+						.FirstOrDefault(a =>
+					{
+						var href = a.GetAttribute("href");
+						return href != null && uniqueUrlsAcrossCards.Contains(href);
+					});
+					if (firstUniqueATag == null)
+					{
+						_logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
+						continue;
+					}
+
+					var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, firstUniqueATag.GetAttribute("href"));
+					if (resultUrl == null) continue;
+
+					// Attempt to find a better title from other <a> tags or headings within the card
+					string? rawTitle = null;
+					foreach (var aTag in aTags)
+					{
+						if (aTag.GetAttribute("href") == firstUniqueATag.GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
+						{
+							rawTitle = aTag.TextContent;
+							break;
+						}
+					}
+					// If no suitable <a> tag text found, look for headings or fallback to card text
+					if (rawTitle == null)
+					{
+						if (card.QuerySelector("h1") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h1")?.TextContent.Trim()))
+							rawTitle = card.QuerySelector("h1")!.TextContent;
+						else if (card.QuerySelector("h2") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h2")?.TextContent.Trim()))
+							rawTitle = card.QuerySelector("h2")!.TextContent;
+						else if (card.QuerySelector("h3") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h3")?.TextContent.Trim()))
+							rawTitle = card.QuerySelector("h3")!.TextContent;
+						else
+							rawTitle = card.TextContent;
+					}
+					// Score the title vs URL and pick the better one
+					string normalisedTitle = ResultATagService.NormaliseString(rawTitle);
+					int titleScore = ResultATagService.GetRankingScore(normalisedQuery, normalisedTitle);
+
+					string extractedUrl = ResultATagService.ExtractUrlPath(resultUrl);
+					int urlScore = ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(extractedUrl));
+
+					string finalTitle;
+					int finalScore;
+
+					if (urlScore > titleScore)
+					{
+						finalTitle = ResultATagService.CleanTitle(extractedUrl);
+						finalScore = urlScore;
+					}
+					else
+					{
+						finalTitle = ResultATagService.CleanTitle(rawTitle);
+						finalScore = titleScore;
+					}
+
+					var imgElement = card.QuerySelector("img");
+
+					yield return CreateResult(
+						link: link,
+						title: finalTitle,
+						resultUrl: resultUrl,
+						score: finalScore,
+						year: ResultCardService.GetYear(card.TextContent),
+						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
+						altText: imgElement?.GetAttribute("alt"));
+				}
 			}
 		}
 
-		private static Result CreateResult(Link link, string title, string resultUrl, int score, int? year, string? imageUrl = null)
+		private static Result CreateResult(Link link, string title, string resultUrl, int score, int? year, string? imageUrl = null, string? altText = null)
 		{
 			return new Result
 			{
@@ -242,7 +251,8 @@ namespace spyglass_backend.Features.Search
 				Score = score,
 				Year = year,
 				Category = link.Category,
-				ImageUrl = imageUrl
+				ImageUrl = imageUrl,
+				AltText = altText
 			};
 		}
 	}
