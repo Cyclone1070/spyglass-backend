@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using System.Threading.Channels;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using spyglass_backend.Configuration;
@@ -82,10 +81,14 @@ namespace spyglass_backend.Features.Search
 					await searchStream.Writer.WriteAsync(resultDto);
 				}
 
+				// After all results are in, sort the cached results by score
+				var sortedResults = results.OrderByDescending(r => r.Score).ToList();
+				searchStream.SortCacheByScore();
+
 				var storedResult = new StoredResult
 				{
 					Query = query,
-					Results = results,
+					Results = sortedResults,
 					CreatedAt = DateTime.UtcNow
 				};
 				await mongoResultService.CreateAsync(storedResult);
@@ -127,34 +130,6 @@ namespace spyglass_backend.Features.Search
 				ImageUrl = result.ImageUrl,
 				AltText = result.AltText
 			};
-		}
-	}
-	// A class to hold the state of an ongoing search stream.
-	public class SearchStream
-	{
-		private readonly Channel<ResultDto> _channel = Channel.CreateUnbounded<ResultDto>();
-		private readonly List<ResultDto> _cachedResults = [];
-		private readonly Lock _cacheLock = new();
-
-		public ChannelWriter<ResultDto> Writer => _channel.Writer;
-		public ChannelReader<ResultDto> Reader => _channel.Reader;
-		public Task? SearchTask { get; set; }
-		public bool IsCompleted { get; set; }
-
-		public void AddToCache(ResultDto result)
-		{
-			lock (_cacheLock)
-			{
-				_cachedResults.Add(result);
-			}
-		}
-
-		public List<ResultDto> GetCachedResults()
-		{
-			lock (_cacheLock)
-			{
-				return [.. _cachedResults];
-			}
 		}
 	}
 }
