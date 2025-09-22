@@ -10,11 +10,13 @@ namespace spyglass_backend.Features.Search
 {
 	public partial class SearchService(
 			ILogger<SearchService> logger,
-			IOptions<ScraperRules> rules,
+			IOptions<ScraperRules> scraperRules,
+			IOptions<SearchSettings> searchSettings,
 			IHttpClientFactory httpClientFactory)
 	{
 		private readonly ILogger<SearchService> _logger = logger;
-		private readonly ScraperRules _rules = rules.Value;
+		private readonly ScraperRules _scraperRules = scraperRules.Value;
+		private readonly SearchSettings _searchSettings = searchSettings.Value;
 		private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
 		public IAsyncEnumerable<Result> SearchLinksAsync(string query, List<Link> links, CancellationToken cancellationToken = default)
@@ -27,7 +29,7 @@ namespace spyglass_backend.Features.Search
 				// Configure the parallelism options.
 				var parallelOptions = new ParallelOptions
 				{
-					MaxDegreeOfParallelism = 50 // Set your desired concurrency limit here (e.g., 10)
+					MaxDegreeOfParallelism = _searchSettings.MaxParallelism // Set your desired concurrency limit here (e.g., 10)
 				};
 
 				try
@@ -166,7 +168,7 @@ namespace spyglass_backend.Features.Search
 							}
 							var secondToLastSegment = segments[^2];
 
-							return !_rules.SearchSkipKeywords.Any(keyword => secondToLastSegment.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+							return !_scraperRules.SearchSkipKeywords.Any(keyword => secondToLastSegment.Contains(keyword, StringComparison.OrdinalIgnoreCase));
 						})
 						.FirstOrDefault(a =>
 					{

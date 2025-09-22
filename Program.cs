@@ -51,6 +51,9 @@ builder.Services.Configure<ScraperRules>(builder.Configuration.GetSection("Scrap
 // Add MongoDB configuration
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDbSettings"));
 
+// Add search configuration
+builder.Services.Configure<SearchSettings>(builder.Configuration.GetSection("SearchSettings"));
+
 builder.Services.AddSingleton<IMongoClient>(sp =>
 	new MongoClient(sp.GetRequiredService<IOptions<MongoDbSettings>>().Value.ConnectionString));
 
@@ -65,6 +68,7 @@ builder.Services.AddSingleton<MegathreadService>();
 builder.Services.AddScoped<MongoResultService>();
 builder.Services.AddSingleton<SearchService>();
 builder.Services.AddSingleton<WebService>();
+builder.Services.AddSingleton<SearchOrchestrationService>();
 
 var app = builder.Build();
 
