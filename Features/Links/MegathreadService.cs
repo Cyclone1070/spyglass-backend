@@ -8,13 +8,15 @@ namespace spyglass_backend.Features.Links
 {
 	public class MegathreadService(
 		ILogger<MegathreadService> logger,
-		IOptions<ScraperRules> rules,
+		IOptions<ScraperRules> scraperRules,
+		IOptions<SearchSettings> searchSettings,
 		WebService webService,
 		WebsiteLinkService websiteLinkService,
 		SearchLinkService searchLinkService)
 	{
 		private readonly ILogger<MegathreadService> _logger = logger;
-		private readonly ScraperRules _rules = rules.Value;
+		private readonly ScraperRules _scraperRules = scraperRules.Value;
+		private readonly SearchSettings _searchSettings = searchSettings.Value;
 		private readonly WebService _webService = webService;
 		private readonly WebsiteLinkService _websiteLinkService = websiteLinkService;
 		private readonly SearchLinkService _searchLinkService = searchLinkService;
@@ -23,7 +25,7 @@ namespace spyglass_backend.Features.Links
 		public async Task<List<Link>> ScrapeMegathreadAsync()
 		{
 			_logger.LogInformation("Starting megathread scraping...");
-			var websiteLinksTask = _rules.MegathreadUrls.Select(async link =>
+			var websiteLinksTask = _scraperRules.MegathreadUrls.Select(async link =>
 			{
 				try
 				{
@@ -47,7 +49,7 @@ namespace spyglass_backend.Features.Links
 			// 1. Configure the parallelism options.
 			var parallelOptions = new ParallelOptions
 			{
-				MaxDegreeOfParallelism = 50 // Set your concurrency limit here
+				MaxDegreeOfParallelism = _searchSettings.MaxParallelism // Set your concurrency limit here
 			};
 
 			// 2. Use Parallel.ForEachAsync to iterate and process the collection.
@@ -60,11 +62,11 @@ namespace spyglass_backend.Features.Links
 					searchLinks.Add(searchLink);
 
 					// Get the queries
-					string[] queries = _rules.CardFindingQueries.ValidQueries.TryGetValue(websiteLink.Category, out var categoryQueries)
+					string[] queries = _scraperRules.CardFindingQueries.ValidQueries.TryGetValue(websiteLink.Category, out var categoryQueries)
 						? categoryQueries
 						: ["the", "of"];
 					// Get the blacklist element selectors
-					var noResultUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_rules.CardFindingQueries.InvalidQuery));
+					var noResultUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_scraperRules.CardFindingQueries.InvalidQuery));
 					var (noResultDoc, noResultResponseTime) = await _webService.GetHtmlDocumentAsync(noResultUrl);
 					var noResultBlacklist = noResultDoc.All
 						.Select(e =>
