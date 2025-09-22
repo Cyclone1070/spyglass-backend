@@ -122,9 +122,8 @@ namespace spyglass_backend.Features.Search
 				Category = result.Category,
 				WebsiteStarred = result.WebsiteStarred,
 				WebsiteTitle = result.WebsiteTitle,
-				WebsiteUrl = result.WebsiteUrl,
+				SearchUrl = result.SearchUrl,
 				Score = result.Score,
-				Year = result.Year,
 				ImageUrl = result.ImageUrl,
 				AltText = result.AltText
 			};

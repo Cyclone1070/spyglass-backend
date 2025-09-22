@@ -141,7 +141,6 @@ namespace spyglass_backend.Features.Search
 						title: ResultATagService.CleanTitle(card.TextContent),
 						resultUrl: resultUrl,
 						score: ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(card.TextContent)),
-						year: ResultCardService.GetYear(card.TextContent),
 						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
 						altText: imgElement?.GetAttribute("alt")
 						);
@@ -234,24 +233,22 @@ namespace spyglass_backend.Features.Search
 						title: finalTitle,
 						resultUrl: resultUrl,
 						score: finalScore,
-						year: ResultCardService.GetYear(card.TextContent),
 						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
 						altText: imgElement?.GetAttribute("alt"));
 				}
 			}
 		}
 
-		private static Result CreateResult(Link link, string title, string resultUrl, int score, int? year, string? imageUrl = null, string? altText = null)
+		private static Result CreateResult(Link link, string title, string resultUrl, int score, string? imageUrl = null, string? altText = null)
 		{
 			return new Result
 			{
 				Title = title,
 				ResultUrl = resultUrl,
 				WebsiteTitle = link.Title,
-				WebsiteUrl = link.Url,
+				SearchUrl = link.SearchUrl,
 				WebsiteStarred = link.Starred,
 				Score = score,
-				Year = year,
 				Category = link.Category,
 				ImageUrl = imageUrl,
 				AltText = altText
