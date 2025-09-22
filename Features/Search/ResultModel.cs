@@ -16,14 +16,12 @@ namespace spyglass_backend.Features.Search
 		public required string Category { get; init; }
 		[BsonElement("websiteTitle")]
 		public required string WebsiteTitle { get; init; }
-		[BsonElement("websiteUrl")]
-		public required string WebsiteUrl { get; init; }
+		[BsonElement("searchUrl")]
+		public required string SearchUrl { get; init; }
 		[BsonElement("websiteStarred")]
 		public required bool WebsiteStarred { get; init; }
 		[BsonElement("score")]
 		public required int Score { get; init; }
-		[BsonElement("year")]
-		public int? Year { get; init; }
 		[BsonElement("imageUrl")]
 		public string? ImageUrl { get; init; }
 		[BsonElement("altText")]
@@ -36,10 +34,9 @@ namespace spyglass_backend.Features.Search
 		public required string ResultUrl { get; init; }
 		public required string Category { get; init; }
 		public required string WebsiteTitle { get; init; }
-		public required string WebsiteUrl { get; init; }
+		public required string SearchUrl { get; init; }
 		public required bool WebsiteStarred { get; init; }
 		public required int Score { get; init; }
-		public int? Year { get; init; }
 		public string? ImageUrl { get; init; }
 		public string? AltText { get; init; }
 
