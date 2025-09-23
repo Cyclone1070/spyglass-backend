@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using FuzzySharp;
 
@@ -8,7 +9,7 @@ namespace spyglass_backend.Features.WebUtils
 		// Find the most likely title
 		public static int GetRankingScore(string normalisedQuery, string normalisedTitle)
 		{
-			int score = Fuzz.WeightedRatio(normalisedQuery, normalisedTitle);
+			int score = Fuzz.TokenSetRatio(normalisedQuery, normalisedTitle);
 
 			var queryWords = normalisedQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 			var titleWords = new HashSet<string>(normalisedTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries));
@@ -30,11 +31,6 @@ namespace spyglass_backend.Features.WebUtils
 		// REGEX 1: Matches anything that ISN'T a letter, number, or space.
 		[GeneratedRegex(@"[^a-z0-9\s]")]
 		private static partial Regex PunctuationRegex();
-
-		// REGEX 2: Matches one or MORE whitespace characters in a row.
-		[GeneratedRegex(@"\s+")]
-		private static partial Regex WhitespaceRegex();
-
 		// Normalizes strings by lowercasing, removing punctuation, and standardizing spaces.
 		public static string NormaliseString(string input)
 		{
@@ -80,17 +76,37 @@ namespace spyglass_backend.Features.WebUtils
 			return lastSegment;
 		}
 
+		// REGEX 2: Matches one or MORE whitespace characters in a row.
+		[GeneratedRegex(@"\s+")]
+		private static partial Regex WhitespaceRegex();
 		// Cleans up title by removing extra spaces created by phrase removal
 		public static string CleanTitle(string title)
 		{
 			if (string.IsNullOrWhiteSpace(title)) return string.Empty;
 
-			// Remove extra spaces created by phrase removal
+			// 1. Initial cleanup of whitespace.
 			title = WhitespaceRegex().Replace(title, " ").Trim();
 
-			return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(title.ToLower());
+			// 2. Split the title into words, process each one conditionally, and then rejoin.
+			return string.Join(" ", title.Split(' ').Select(word =>
+			{
+				// If a word is empty/null or already contains ANY uppercase letters,
+				// leave it exactly as it is. This preserves acronyms (GTA) and mixed case (McLovin).
+				if (string.IsNullOrEmpty(word) || word.Any(char.IsUpper))
+				{
+					return word;
+				}
+				else
+				{
+					if (word.Length > 1)
+					{
+						return char.ToUpper(word[0]) + word[1..].ToLower();
+					}
+					// For single-letter words like "a" or "i".
+					return word.ToUpper();
+				}
+			}));
 		}
-
 		// Converts a possibly relative URL to an absolute URL based on the provided base URL.
 		public static string? ToAbsoluteUrl(string baseUrl, string? url)
 		{
