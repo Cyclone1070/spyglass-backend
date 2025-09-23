@@ -1,21 +1,14 @@
 services:
   server:
-    build: .
+    # The image name should ideally be tagged with your Docker Hub username for remote deployment.
+    # Example: your-username/spyglass-backend:latest
+    image: cyclone1070/spyglass-backend:latest
+    restart: unless-stopped
     ports:
-      - "5250:5250"
+      - "5250:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:5250
-      - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
-    depends_on:
-      - mongodb
-
-  mongodb:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-
-volumes:
-  mongo-data:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      # This tells Docker Compose to get the connection string from the .env file
+      # or from an environment variable on the host machine.
+      - MongoDbSettings__ConnectionString=${MONGO_CONNECTION_STRING}
