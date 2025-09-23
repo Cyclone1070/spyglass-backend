@@ -16,6 +16,16 @@ namespace spyglass_backend.Features.WebUtils
 		public async Task<(IDocument, long)> GetHtmlDocumentAsync(string url)
 		{
 			var client = _httpClientFactory.CreateClient();
+
+			// Add anti-bot headers
+			client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Language", "en-US,en;q=0.9");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("Accept-Encoding", "gzip, deflate, br");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("Connection", "keep-alive");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("Upgrade-Insecure-Requests", "1");
+			client.DefaultRequestHeaders.TryAddWithoutValidation("DNT", "1");
+
 			var stopwatch = Stopwatch.StartNew();
 			var htmlContent = await client.GetStringAsync(url);
 			stopwatch.Stop();
