@@ -19,10 +19,9 @@ namespace spyglass_backend.Features.Search
 		private readonly SearchSettings _searchSettings = searchSettings.Value;
 		private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
-		public IAsyncEnumerable<Result> SearchLinksAsync(string query, List<Link> links, CancellationToken cancellationToken = default)
+		public IAsyncEnumerable<Result> SearchLinksAsync(string normalisedQuery, List<Link> links, CancellationToken cancellationToken = default)
 		{
 			var channel = Channel.CreateUnbounded<Result>();
-			string normalisedQuery = ResultATagService.NormaliseString(query);
 
 			_ = Task.Run(async () =>
 			{

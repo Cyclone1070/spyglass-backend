@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
+using spyglass_backend.Features.WebUtils;
 
 namespace spyglass_backend.Features.Search
 {
@@ -21,7 +22,9 @@ namespace spyglass_backend.Features.Search
 
 		public async IAsyncEnumerable<ResultDto> GetOrStartSearchStream(string query, [EnumeratorCancellation] CancellationToken cancellationToken = default)
 		{
-			var searchStream = _activeSearches.GetOrAdd(query, q =>
+			string normalisedQuery = ResultATagService.NormaliseString(query);
+
+			var searchStream = _activeSearches.GetOrAdd(normalisedQuery, q =>
 			{
 				_logger.LogInformation("Starting new search stream for query: {Query}", q);
 				var newStream = new SearchStream();
@@ -47,7 +50,7 @@ namespace spyglass_backend.Features.Search
 			}
 		}
 
-		private async Task StartSearchInBackground(string query, SearchStream searchStream)
+		private async Task StartSearchInBackground(string normalisedQuery, SearchStream searchStream)
 		{
 			using var scope = _serviceProvider.CreateScope();
 			var mongoResultService = scope.ServiceProvider.GetRequiredService<MongoResultService>();
@@ -56,10 +59,10 @@ namespace spyglass_backend.Features.Search
 			try
 			{
 				using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_searchSettings.SearchTimeoutSecond));
-				var cachedResult = await mongoResultService.GetAsync(query);
+				var cachedResult = await mongoResultService.GetAsync(normalisedQuery);
 				if (cachedResult != null)
 				{
-					_logger.LogInformation("Found cached results in MongoDB for query: {Query}", query);
+					_logger.LogInformation("Found cached results in MongoDB for query: {Query}", normalisedQuery);
 					foreach (var result in cachedResult.Results)
 					{
 						var resultDto = ToResultDto(result);
@@ -71,7 +74,7 @@ namespace spyglass_backend.Features.Search
 
 				var links = await mongoLinkService.GetAsync("responseTime", SortDirection.Ascending);
 				var results = new List<Result>();
-				var resultStream = _searchService.SearchLinksAsync(query, links, timeoutCts.Token);
+				var resultStream = _searchService.SearchLinksAsync(normalisedQuery, links, timeoutCts.Token);
 
 				await foreach (var result in resultStream)
 				{
@@ -87,17 +90,17 @@ namespace spyglass_backend.Features.Search
 
 				var storedResult = new StoredResult
 				{
-					Query = query,
+					Query = normalisedQuery,
 					Results = sortedResults,
 					CreatedAt = DateTime.UtcNow
 				};
 				await mongoResultService.CreateAsync(storedResult);
-				_logger.LogInformation("Stored results for query: {Query}", query);
+				_logger.LogInformation("Stored results for query: {Query}", normalisedQuery);
 
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error during search for query: {Query}", query);
+				_logger.LogError(ex, "Error during search for query: {Query}", normalisedQuery);
 			}
 			finally
 			{
@@ -109,9 +112,9 @@ namespace spyglass_backend.Features.Search
 					// Wait for a grace period (e.g., 5 minutes) to allow any late-joining clients
 					// to fetch the cached results before removing the stream from memory.
 					await Task.Delay(TimeSpan.FromMinutes(_searchSettings.CacheDurationMinute));
-					if (_activeSearches.TryRemove(query, out _))
+					if (_activeSearches.TryRemove(normalisedQuery, out _))
 					{
-						_logger.LogInformation("Cleaned up completed search stream for query: {Query}", query);
+						_logger.LogInformation("Cleaned up completed search stream for query: {Query}", normalisedQuery);
 					}
 				});
 			}
