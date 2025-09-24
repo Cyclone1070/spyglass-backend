@@ -38,8 +38,8 @@ builder.Services.AddCors(options =>
 	options.AddPolicy(name: MyAllowSpecificOrigins,
 					  policy =>
 					  {
-						  // Allow Vite development server
-						  policy.WithOrigins("http://localhost:5173")
+						  // Allow Vite development server & production frontend
+						  policy.WithOrigins("http://localhost:5173", "https://spyglass.cyc.fyi")
 								.AllowAnyHeader()
 								.AllowAnyMethod();
 					  });
