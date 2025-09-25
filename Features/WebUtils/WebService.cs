@@ -13,7 +13,7 @@ namespace spyglass_backend.Features.WebUtils
 	{
 		private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
-		public async Task<(IDocument, long)> GetHtmlDocumentAsync(string url)
+		public async Task<(IDocument, long)> GetHtmlDocumentAsync(string url, Uri? referer = null)
 		{
 			var client = _httpClientFactory.CreateClient();
 
@@ -24,6 +24,11 @@ namespace spyglass_backend.Features.WebUtils
 			client.DefaultRequestHeaders.TryAddWithoutValidation("Connection", "keep-alive");
 			client.DefaultRequestHeaders.TryAddWithoutValidation("Upgrade-Insecure-Requests", "1");
 			client.DefaultRequestHeaders.TryAddWithoutValidation("DNT", "1");
+			// Add the Referer header if provided
+			if (referer != null)
+			{
+				client.DefaultRequestHeaders.Referrer = referer;
+			}
 
 			var stopwatch = Stopwatch.StartNew();
 			var htmlContent = await client.GetStringAsync(url);

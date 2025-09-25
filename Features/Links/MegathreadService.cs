@@ -25,6 +25,7 @@ namespace spyglass_backend.Features.Links
 		public async Task<List<Link>> ScrapeMegathreadAsync()
 		{
 			_logger.LogInformation("Starting megathread scraping...");
+			// Scrape website links from megathread URLs
 			var websiteLinksTask = _scraperRules.MegathreadUrls.Select(async link =>
 			{
 				try
@@ -53,7 +54,7 @@ namespace spyglass_backend.Features.Links
 			};
 
 			// 2. Use Parallel.ForEachAsync to iterate and process the collection.
-			await Parallel.ForEachAsync(websiteLinks, parallelOptions, async (websiteLink, cancellationToken) =>
+			await Parallel.ForEachAsync(websiteLinks, parallelOptions, async (websiteLink, _) =>
 			{
 				_logger.LogDebug("Processing website link: {Url}", websiteLink.Url);
 				try
@@ -67,7 +68,7 @@ namespace spyglass_backend.Features.Links
 						: ["the", "of"];
 					// Get the blacklist element selectors
 					var noResultUrl = string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(_scraperRules.CardFindingQueries.InvalidQuery));
-					var (noResultDoc, noResultResponseTime) = await _webService.GetHtmlDocumentAsync(noResultUrl);
+					var (noResultDoc, noResultResponseTime) = await _webService.GetHtmlDocumentAsync(noResultUrl, new Uri(websiteLink.Url));
 					var noResultBlacklist = noResultDoc.All
 						.Select(e =>
 						{
@@ -96,8 +97,8 @@ namespace spyglass_backend.Features.Links
 						.ToHashSet();
 
 					// Get the 2 documents with results
-					var (withResultsDoc1, withResultsResponseTime1) = await _webService.GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])));
-					var (withResultsDoc2, withResultsResponseTime2) = await _webService.GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[1])));
+					var (withResultsDoc1, withResultsResponseTime1) = await _webService.GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[0])), new Uri(websiteLink.Url));
+					var (withResultsDoc2, withResultsResponseTime2) = await _webService.GetHtmlDocumentAsync(string.Format(searchLink.SearchUrl, HttpUtility.UrlEncode(queries[1])), new Uri(websiteLink.Url));
 					var averageResponseTime = (noResultResponseTime + withResultsResponseTime1 + withResultsResponseTime2) / 3;
 
 					// Find the result card selector
