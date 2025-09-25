@@ -58,7 +58,6 @@ namespace spyglass_backend.Features.Search
 
 			try
 			{
-				using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(_searchSettings.SearchTimeoutSecond));
 				var cachedResult = await mongoResultService.GetAsync(normalisedQuery);
 				if (cachedResult != null)
 				{
@@ -74,7 +73,7 @@ namespace spyglass_backend.Features.Search
 
 				var links = await mongoLinkService.GetAsync("responseTime", SortDirection.Ascending);
 				var results = new List<Result>();
-				var resultStream = _searchService.SearchLinksAsync(normalisedQuery, links, timeoutCts.Token);
+				var resultStream = _searchService.SearchLinksAsync(normalisedQuery, links);
 
 				await foreach (var result in resultStream)
 				{
