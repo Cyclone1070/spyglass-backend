@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
 using FuzzySharp;
 
@@ -9,7 +8,7 @@ namespace spyglass_backend.Features.WebUtils
 		// Find the most likely title
 		public static int GetRankingScore(string normalisedQuery, string normalisedTitle)
 		{
-			int score = Fuzz.TokenSetRatio(normalisedQuery, normalisedTitle);
+			int score = Fuzz.WeightedRatio(normalisedQuery, normalisedTitle);
 
 			var queryWords = normalisedQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 			var titleWords = new HashSet<string>(normalisedTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries));
@@ -25,11 +24,16 @@ namespace spyglass_backend.Features.WebUtils
 			{
 				score -= 1;
 			}
+			// reduce score by 30 if the title is shorter than the query
+			if (normalisedTitle.Length < normalisedQuery.Length)
+			{
+				score -= 30;
+			}
 
 			return score;
 		}
 		// REGEX 1: Matches anything that ISN'T a letter, number, or space.
-		[GeneratedRegex(@"[^a-z0-9\s]")]
+		[GeneratedRegex(@"\p{P}")]
 		private static partial Regex PunctuationRegex();
 		// Normalizes strings by lowercasing, removing punctuation, and standardizing spaces.
 		public static string NormaliseString(string input)
