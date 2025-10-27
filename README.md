@@ -1,4 +1,4 @@
-# C# search engine for internet freebies
+# C# search engine for free media on the internet
 
 From public domain books to Abandonware/ROMs, all sourced from reputable websites.
 
