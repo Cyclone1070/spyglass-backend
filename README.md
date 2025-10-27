@@ -6,8 +6,6 @@ Spyglass Backend is a C# application that serves as the backend for the Spyglass
 
 Visit [fmhy.net](fmhy.net) for more information.
 
-Visit [Spyglass Backend](https://github.com/Cyclone1070/spyglass-backend) to checkout the backend code.
-
 ## Dotnet concepts learned and applied
 
 - **ASP.NET Core:** Built a RESTful API backend using ASP.NET Core with a controller-based approach.
