@@ -2,7 +2,11 @@
 
 From public domain books to Abandonware/ROMs, all sourced from reputable websites.
 
-Spyglass Backend is a C# application that serves as the backend for the Spyglass search engine. It scrapes search results from a community-maintained list of reputable websites. Visit [fmhy.net](fmhy.net) for more information.
+Spyglass Backend is a C# application that serves as the backend for the Spyglass search engine. It scrapes search results from a community-maintained list of reputable websites. 
+
+Visit [fmhy.net](fmhy.net) for more information.
+
+Visit [Spyglass Backend](https://github.com/Cyclone1070/spyglass-backend) to checkout the backend code.
 
 ## Dotnet concepts learned and applied
 
