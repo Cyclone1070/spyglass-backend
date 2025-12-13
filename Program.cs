@@ -64,13 +64,26 @@ var app = builder.Build();
 // Create TTL index on the 'results' collection
 using (var scope = app.Services.CreateScope())
 {
-	var services = scope.ServiceProvider;
-	var database = services.GetRequiredService<IMongoDatabase>();
-	var resultsCollection = database.GetCollection<StoredResult>("results");
-	var indexKeysDefinition = Builders<StoredResult>.IndexKeys.Ascending(x => x.CreatedAt);
-	var indexOptions = new CreateIndexOptions { ExpireAfter = TimeSpan.FromDays(7) }; // Set the desired expiration time
-	var indexModel = new CreateIndexModel<StoredResult>(indexKeysDefinition, indexOptions);
-	resultsCollection.Indexes.CreateOne(indexModel);
+	try
+	{
+		var services = scope.ServiceProvider;
+		var logger = services.GetRequiredService<ILogger<Program>>();
+		var database = services.GetRequiredService<IMongoDatabase>();
+		var resultsCollection = database.GetCollection<StoredResult>("results");
+		var indexKeysDefinition = Builders<StoredResult>.IndexKeys.Ascending(x => x.CreatedAt);
+		var indexOptions = new CreateIndexOptions { ExpireAfter = TimeSpan.FromDays(7) }; // Set the desired expiration time
+		var indexModel = new CreateIndexModel<StoredResult>(indexKeysDefinition, indexOptions);
+		
+		await resultsCollection.Indexes.CreateOneAsync(indexModel);
+		logger.LogInformation("TTL index created successfully on results collection with 7 day expiration");
+	}
+	catch (Exception ex)
+	{
+		var services = scope.ServiceProvider;
+		var logger = services.GetRequiredService<ILogger<Program>>();
+		logger.LogError(ex, "Failed to create TTL index on results collection. Application startup aborted.");
+		throw; // Fail fast - if we can't create the index, don't start the app
+	}
 }
 
 // Configure the HTTP request pipeline and cors.
