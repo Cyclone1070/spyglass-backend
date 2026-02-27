@@ -46,13 +46,16 @@ namespace spyglass_backend.Features.Links
 		private IEnumerable<WebsiteLink> ScrapeLinksFromHeader(IElement headerElement, string categoryName)
 		{
 
+			// The links are usually within a <ul> tag.
+			// However, FMHY sometimes inserts <div class="tip"> or other blocks between the header and the list.
+			// We iterate through siblings until we find the first <ul>.
 			var listElement = headerElement.NextElementSibling;
 			while (listElement != null && listElement.TagName != "UL")
 			{
 				listElement = listElement.NextElementSibling;
 			}
 
-			if (listElement == null)
+			if (listElement == null || listElement.TagName != "UL")
 			{
 				// Return an empty list of links if no <ul> is found.
 				return [];
