@@ -31,6 +31,17 @@ builder.Services.AddHttpClient(Options.DefaultName, client =>
 	AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.Brotli,
 	ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
 });
+
+builder.Services.AddHttpClient("ProxyClient", client =>
+{
+	client.Timeout = TimeSpan.FromSeconds(10);
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+	Proxy = new System.Net.WebProxy("http://proxy-spyglass.cyc.fyi"),
+	UseProxy = true,
+	AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.Brotli,
+	ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();

@@ -13,9 +13,15 @@ namespace spyglass_backend.Features.WebUtils
 	{
 		private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
 
-		public async Task<(IDocument, long)> GetHtmlDocumentAsync(string url, Uri? referer = null)
+		public async Task<(IDocument, long)> GetHtmlDocumentAsync(string url, Uri? referer = null, bool useProxy = false)
 		{
 			var client = _httpClientFactory.CreateClient();
+			var requestUrl = url;
+
+			if (useProxy)
+			{
+				requestUrl = $"http://proxy-spyglass.cyc.fyi/fetch?url={System.Web.HttpUtility.UrlEncode(url)}";
+			}
 
 			// Add anti-bot headers
 			client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
@@ -31,7 +37,13 @@ namespace spyglass_backend.Features.WebUtils
 			}
 
 			var stopwatch = Stopwatch.StartNew();
-			var htmlContent = await client.GetStringAsync(url);
+			using var response = await client.GetAsync(requestUrl);
+			if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+			{
+				throw new HttpRequestException("Forbidden", null, System.Net.HttpStatusCode.Forbidden);
+			}
+			response.EnsureSuccessStatusCode();
+			var htmlContent = await response.Content.ReadAsStringAsync();
 			stopwatch.Stop();
 			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
 			var document = await context.OpenAsync(req => req.Content(htmlContent));

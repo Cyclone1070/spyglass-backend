@@ -1,27 +1,23 @@
 using AngleSharp.Dom;
-
 using AngleSharp;
 using System.Text;
 using System.Text.RegularExpressions;
+using spyglass_backend.Features.WebUtils;
 
 namespace spyglass_backend.Features.Links
 {
 	public partial class SearchLinkService(
 		ILogger<SearchLinkService> logger,
-		IHttpClientFactory httpClientFactory)
+		WebService webService)
 	{
 		private readonly ILogger<SearchLinkService> _logger = logger;
-		private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
+		private readonly WebService _webService = webService;
 
-		public async Task<SearchLink> ScrapeSearchLinksAsync(WebsiteLink link)
+		public async Task<SearchLink> ScrapeSearchLinksAsync(WebsiteLink link, bool useProxy = false)
 		{
-			_logger.LogInformation("Scraping search links for {Url}...", link.Url);
+			_logger.LogInformation("Scraping search links for {Url} (Proxy: {UseProxy})...", link.Url, useProxy);
 
-			var client = _httpClientFactory.CreateClient();
-			var htmlContent = await client.GetStringAsync(link.Url);
-
-			var context = BrowsingContext.New(AngleSharp.Configuration.Default);
-			var document = await context.OpenAsync(req => req.Content(htmlContent));
+			var (document, _) = await _webService.GetHtmlDocumentAsync(link.Url, useProxy: useProxy);
 
 			// --- Phase 1: Filter for likely search forms ---
 			// AngleSharp's Filter() is a LINQ extension method for filtering

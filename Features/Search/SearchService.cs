@@ -3,6 +3,8 @@ using Microsoft.Extensions.Options;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
 using spyglass_backend.Features.WebUtils;
+using AngleSharp;
+using AngleSharp.Dom;
 
 namespace spyglass_backend.Features.Search
 {
@@ -66,7 +68,17 @@ namespace spyglass_backend.Features.Search
 		private async IAsyncEnumerable<Result> ScrapeLinkAsync(string normalisedQuery, Link link)
 		{
 			var queryUrl = string.Format(link.SearchUrl, Uri.EscapeDataString(normalisedQuery));
-			var (document, _) = await _webService.GetHtmlDocumentAsync(queryUrl, referer: new Uri(link.Url));
+			
+			IDocument document;
+			try
+			{
+				(document, _) = await _webService.GetHtmlDocumentAsync(queryUrl, referer: new Uri(link.Url));
+			}
+			catch (HttpRequestException e) when (e.StatusCode == System.Net.HttpStatusCode.Forbidden)
+			{
+				_logger.LogWarning("Got 403 for search on {Url}. Retrying through proxy relay...", link.Url);
+				(document, _) = await _webService.GetHtmlDocumentAsync(queryUrl, referer: new Uri(link.Url), useProxy: true);
+			}
 
 			var cards = document.QuerySelectorAll(link.CardSelector);
 
