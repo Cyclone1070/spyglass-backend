@@ -1,259 +1,325 @@
 using System.Threading.Channels;
+using AngleSharp;
+using AngleSharp.Dom;
 using Microsoft.Extensions.Options;
 using spyglass_backend.Configuration;
 using spyglass_backend.Features.Links;
 using spyglass_backend.Features.WebUtils;
-using AngleSharp;
-using AngleSharp.Dom;
 
 namespace spyglass_backend.Features.Search
 {
-	public partial class SearchService(
-			ILogger<SearchService> logger,
-			IOptions<ScraperRules> scraperRules,
-			IOptions<SearchSettings> searchSettings,
-			WebService webService)
-	{
-		private readonly ILogger<SearchService> _logger = logger;
-		private readonly ScraperRules _scraperRules = scraperRules.Value;
-		private readonly SearchSettings _searchSettings = searchSettings.Value;
-		private readonly WebService _webService = webService;
+    public class SearchService(
+        ILogger<SearchService> logger,
+        IOptions<ScraperRules> scraperRules,
+        IOptions<SearchSettings> searchSettings,
+        WebService webService
+    )
+    {
+        private readonly ILogger<SearchService> _logger = logger;
+        private readonly ScraperRules _scraperRules = scraperRules.Value;
+        private readonly SearchSettings _searchSettings = searchSettings.Value;
+        private readonly WebService _webService = webService;
 
-		public IAsyncEnumerable<Result> SearchLinksAsync(string normalisedQuery, List<Link> links)
-		{
-			var channel = Channel.CreateUnbounded<Result>();
+        public IAsyncEnumerable<Result> SearchLinksAsync(string normalisedQuery, List<Link> links)
+        {
+            var channel = Channel.CreateUnbounded<Result>();
 
-			_ = Task.Run(async () =>
-			{
-				// Configure the parallelism options.
-				var parallelOptions = new ParallelOptions
-				{
-					MaxDegreeOfParallelism = _searchSettings.MaxParallelism
-				};
+            _ = Task.Run(async () =>
+            {
+                // Configure the parallelism options.
+                var parallelOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = _searchSettings.MaxParallelism,
+                };
 
-				try
-				{
-					await Parallel.ForEachAsync(links, parallelOptions, async (link, _) =>
-					{
-						try
-						{
-							var results = ScrapeLinkAsync(normalisedQuery, link);
-							await foreach (var result in results)
-							{
-								// Put the found item on the conveyor belt
-								await channel.Writer.WriteAsync(result, CancellationToken.None);
-							}
-						}
-						catch (OperationCanceledException)
-						{
-							_logger.LogInformation("Scraping for link {LinkUrl} was cancelled.", link.Url);
-						}
-						catch (Exception ex)
-						{
-							_logger.LogError(ex, "Failed to scrape link {LinkUrl}", link.Url);
-						}
-					});
-				}
-				finally
-				{
-					// Signal that no more items will be written to the channel
-					channel.Writer.Complete();
-				}
-			});
+                try
+                {
+                    await Parallel.ForEachAsync(
+                        links,
+                        parallelOptions,
+                        async (link, _) =>
+                        {
+                            try
+                            {
+                                await foreach (var result in ScrapeLinkAsync(normalisedQuery, link))
+                                {
+                                    // Put the found item on the conveyor belt
+                                    await channel.Writer.WriteAsync(result, CancellationToken.None);
+                                }
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                _logger.LogInformation(
+                                    "Scraping for link {LinkUrl} was cancelled.",
+                                    link.Url
+                                );
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Failed to scrape link {LinkUrl}", link.Url);
+                            }
+                        }
+                    );
+                }
+                finally
+                {
+                    // Signal that no more items will be written to the channel
+                    channel.Writer.Complete();
+                }
+            });
 
-			// Return the reader side of the channel as an async enumerable
-			return channel.Reader.ReadAllAsync();
-		}
+            // Return the reader side of the channel as an async enumerable
+            return channel.Reader.ReadAllAsync();
+        }
 
-		private async IAsyncEnumerable<Result> ScrapeLinkAsync(string normalisedQuery, Link link)
-		{
-			var queryUrl = string.Format(link.SearchUrl, Uri.EscapeDataString(normalisedQuery));
-			
-			IDocument document;
-			try
-			{
-				(document, _) = await _webService.GetHtmlDocumentAsync(queryUrl, referer: new Uri(link.Url));
-			}
-			catch (HttpRequestException e) when (e.StatusCode == System.Net.HttpStatusCode.Forbidden)
-			{
-				_logger.LogWarning("Got 403 for search on {Url}. Retrying through proxy relay...", link.Url);
-				(document, _) = await _webService.GetHtmlDocumentAsync(queryUrl, referer: new Uri(link.Url), useProxy: true);
-			}
+        private async IAsyncEnumerable<Result> ScrapeLinkAsync(string normalisedQuery, Link link)
+        {
+            var queryUrl = string.Format(link.SearchUrl, Uri.EscapeDataString(normalisedQuery));
 
-			var cards = document.QuerySelectorAll(link.CardSelector);
+            IDocument document;
+            try
+            {
+                (document, _) = await _webService.GetHtmlDocumentAsync(
+                    queryUrl,
+                    referer: new Uri(link.Url)
+                );
+            }
+            catch (HttpRequestException e)
+                when (e.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                _logger.LogWarning(
+                    "Got 403 for search on {Url}. Retrying through proxy relay...",
+                    link.Url
+                );
+                (document, _) = await _webService.GetHtmlDocumentAsync(
+                    queryUrl,
+                    referer: new Uri(link.Url),
+                    useProxy: true
+                );
+            }
 
-			// 1. Create a dictionary to count how many DISTINCT cards each href appears in.
-			var hrefToDistinctCardCount = new Dictionary<string, int>();
+            var cards = document.QuerySelectorAll(link.CardSelector);
 
-			foreach (var card in cards)
-			{
-				// Get all <a> tags with href attributes within the current card
-				var aTagsInCard = card.QuerySelectorAll("a[href]");
+            // 1. Create a dictionary to count how many DISTINCT cards each href appears in.
+            var hrefToDistinctCardCount = new Dictionary<string, int>();
 
-				// Extract all UNIQUE hrefs WITHIN THIS specific card
-				// This ensures that if an href appears multiple times in the same card, it's counted only once for that card.
-				var distinctHrefsInCurrentCard = aTagsInCard
-					.Select(a => a.GetAttribute("href"))
-					.Where(href => href != null)
-					.Select(href => href!) // Non-nullable now
-					.Distinct() // Only count each href once PER CARD
-					.ToList();
+            foreach (var card in cards)
+            {
+                // Get all <a> tags with href attributes within the current card
+                var aTagsInCard = card.QuerySelectorAll("a[href]");
 
-				// For each unique href found in this card, increment its count in the dictionary
-				foreach (var href in distinctHrefsInCurrentCard)
-				{
-					// Use TryGetValue to avoid double lookup and handle potential missing keys gracefully
-					if (hrefToDistinctCardCount.TryGetValue(href, out int count))
-					{
-						hrefToDistinctCardCount[href] = count + 1;
-					}
-					else
-					{
-						hrefToDistinctCardCount[href] = 1;
-					}
-				}
-			}
+                // Extract all UNIQUE hrefs WITHIN THIS specific card
+                // This ensures that if an href appears multiple times in the same card, it's counted only once for that card.
+                var distinctHrefsInCurrentCard = aTagsInCard
+                    .Select(a => a.GetAttribute("href"))
+                    .Where(href => href != null)
+                    .Select(href => href!) // Non-nullable now
+                    .Distinct() // Only count each href once PER CARD
+                    .ToList();
 
-			// 2. Determine which hrefs are truly unique across ALL cards (i.e., they appeared in only ONE distinct card).
-			var uniqueUrlsAcrossCards = hrefToDistinctCardCount
-										.Where(pair => pair.Value == 1) // Keep hrefs that appeared in exactly one distinct card
-										.Select(pair => pair.Key) // Get the unique href string
-										.ToHashSet(); // Store in a HashSet for efficient lookup			
+                // For each unique href found in this card, increment its count in the dictionary
+                foreach (var href in distinctHrefsInCurrentCard)
+                {
+                    // Use TryGetValue to avoid double lookup and handle potential missing keys gracefully
+                    if (hrefToDistinctCardCount.TryGetValue(href, out int count))
+                    {
+                        hrefToDistinctCardCount[href] = count + 1;
+                    }
+                    else
+                    {
+                        hrefToDistinctCardCount[href] = 1;
+                    }
+                }
+            }
 
-			foreach (var card in cards)
-			{
-				// Handle the case where the card itself is an <a> tag
-				if (card.TagName.Equals("A", StringComparison.OrdinalIgnoreCase))
-				{
-					string? currentCardHref = card.GetAttribute("href");
-					if (currentCardHref == null || !uniqueUrlsAcrossCards.Contains(currentCardHref))
-					{
-						_logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
-						continue; // Skip this card if its href is not unique or missing 
-					}
+            // 2. Determine which hrefs are truly unique across ALL cards (i.e., they appeared in only ONE distinct card).
+            var uniqueUrlsAcrossCards = hrefToDistinctCardCount
+                .Where(pair => pair.Value == 1) // Keep hrefs that appeared in exactly one distinct card
+                .Select(pair => pair.Key) // Get the unique href string
+                .ToHashSet(); // Store in a HashSet for efficient lookup
 
-					string? resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, currentCardHref);
-					if (resultUrl == null) continue;
+            foreach (var card in cards)
+            {
+                // Handle the case where the card itself is an <a> tag
+                if (card.TagName.Equals("A", StringComparison.OrdinalIgnoreCase))
+                {
+                    string? currentCardHref = card.GetAttribute("href");
+                    if (currentCardHref == null || !uniqueUrlsAcrossCards.Contains(currentCardHref))
+                    {
+                        _logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
+                        continue; // Skip this card if its href is not unique or missing
+                    }
 
-					var imgElement = card.QuerySelector("img");
+                    string? resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, currentCardHref);
+                    if (resultUrl == null)
+                        continue;
 
-					yield return CreateResult(
-						link: link,
-						title: ResultATagService.CleanTitle(card.TextContent),
-						resultUrl: resultUrl,
-						score: ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(card.TextContent)),
-						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
-						altText: imgElement?.GetAttribute("alt")
-						);
-					continue;
-				}
-				else
-				{
-					var aTags = card.QuerySelectorAll("a[href]");
-					if (aTags.Length == 0) continue;
-					// Use the first <a> tag with an href attribute
-					var firstUniqueATag = aTags
-						.Where(a =>
-						{
-							// check for category links
-							var currentUrl = a.GetAttribute("href");
-							if (string.IsNullOrWhiteSpace(currentUrl))
-							{
-								return false;
-							}
-							var segments = currentUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
-							if (segments.Length < 2)
-							{
-								return true; // Not enough segments to determine category, assume valid
-							}
-							var secondToLastSegment = segments[^2];
+                    var imgElement = card.QuerySelector("img");
 
-							return !_scraperRules.SearchSkipKeywords.Any(keyword => secondToLastSegment.Contains(keyword, StringComparison.OrdinalIgnoreCase));
-						})
-						.FirstOrDefault(a =>
-					{
-						var href = a.GetAttribute("href");
-						return href != null && uniqueUrlsAcrossCards.Contains(href);
-					});
-					if (firstUniqueATag == null)
-					{
-						_logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
-						continue;
-					}
+                    yield return CreateResult(
+                        link: link,
+                        title: ResultATagService.CleanTitle(card.TextContent),
+                        resultUrl: resultUrl,
+                        score: ResultATagService.GetRankingScore(
+                            normalisedQuery,
+                            ResultATagService.NormaliseString(card.TextContent)
+                        ),
+                        imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
+                        altText: imgElement?.GetAttribute("alt")
+                    );
+                }
+                else
+                {
+                    var aTags = card.QuerySelectorAll("a[href]");
+                    if (aTags.Length == 0)
+                        continue;
+                    // Use the first <a> tag with an href attribute
+                    var firstUniqueATag = aTags
+                        .Where(a =>
+                        {
+                            // check for category links
+                            var currentUrl = a.GetAttribute("href");
+                            if (string.IsNullOrWhiteSpace(currentUrl))
+                            {
+                                return false;
+                            }
+                            var segments = currentUrl.Split(
+                                '/',
+                                StringSplitOptions.RemoveEmptyEntries
+                            );
+                            if (segments.Length < 2)
+                            {
+                                return true; // Not enough segments to determine category, assume valid
+                            }
+                            var secondToLastSegment = segments[^2];
 
-					var resultUrl = ResultATagService.ToAbsoluteUrl(link.Url, firstUniqueATag.GetAttribute("href"));
-					if (resultUrl == null) continue;
+                            return !_scraperRules.SearchSkipKeywords.Any(keyword =>
+                                secondToLastSegment.Contains(
+                                    keyword,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            );
+                        })
+                        .FirstOrDefault(a =>
+                        {
+                            var href = a.GetAttribute("href");
+                            return href != null && uniqueUrlsAcrossCards.Contains(href);
+                        });
+                    if (firstUniqueATag == null)
+                    {
+                        _logger.LogWarning("No unique link found in card from {LinkUrl}", link.Url);
+                        continue;
+                    }
 
-					// Attempt to find a better title from other <a> tags or headings within the card
-					string? rawTitle = null;
-					foreach (var aTag in aTags)
-					{
-						if (aTag.GetAttribute("href") == firstUniqueATag.GetAttribute("href") && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim()))
-						{
-							rawTitle = aTag.TextContent;
-							break;
-						}
-					}
-					// If no suitable <a> tag text found, look for headings or fallback to card text
-					if (rawTitle == null)
-					{
-						if (card.QuerySelector("h1") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h1")?.TextContent.Trim()))
-							rawTitle = card.QuerySelector("h1")!.TextContent;
-						else if (card.QuerySelector("h2") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h2")?.TextContent.Trim()))
-							rawTitle = card.QuerySelector("h2")!.TextContent;
-						else if (card.QuerySelector("h3") != null && !string.IsNullOrWhiteSpace(card.QuerySelector("h3")?.TextContent.Trim()))
-							rawTitle = card.QuerySelector("h3")!.TextContent;
-						else
-							rawTitle = card.TextContent;
-					}
-					// Score the title vs URL and pick the better one
-					string normalisedTitle = ResultATagService.NormaliseString(rawTitle);
-					int titleScore = ResultATagService.GetRankingScore(normalisedQuery, normalisedTitle);
+                    var resultUrl = ResultATagService.ToAbsoluteUrl(
+                        link.Url,
+                        firstUniqueATag.GetAttribute("href")
+                    );
+                    if (resultUrl == null)
+                        continue;
 
-					string extractedUrl = ResultATagService.ExtractUrlPath(resultUrl);
-					int urlScore = ResultATagService.GetRankingScore(normalisedQuery, ResultATagService.NormaliseString(extractedUrl));
+                    // Attempt to find a better title from other <a> tags or headings within the card
+                    string? rawTitle = null;
+                    foreach (var aTag in aTags)
+                    {
+                        if (
+                            aTag.GetAttribute("href") == firstUniqueATag.GetAttribute("href")
+                            && !string.IsNullOrWhiteSpace(aTag.TextContent.Trim())
+                        )
+                        {
+                            rawTitle = aTag.TextContent;
+                            break;
+                        }
+                    }
+                    // If no suitable <a> tag text found, look for headings or fallback to card text
+                    if (rawTitle == null)
+                    {
+                        if (
+                            card.QuerySelector("h1") != null
+                            && !string.IsNullOrWhiteSpace(
+                                card.QuerySelector("h1")?.TextContent.Trim()
+                            )
+                        )
+                            rawTitle = card.QuerySelector("h1")!.TextContent;
+                        else if (
+                            card.QuerySelector("h2") != null
+                            && !string.IsNullOrWhiteSpace(
+                                card.QuerySelector("h2")?.TextContent.Trim()
+                            )
+                        )
+                            rawTitle = card.QuerySelector("h2")!.TextContent;
+                        else if (
+                            card.QuerySelector("h3") != null
+                            && !string.IsNullOrWhiteSpace(
+                                card.QuerySelector("h3")?.TextContent.Trim()
+                            )
+                        )
+                            rawTitle = card.QuerySelector("h3")!.TextContent;
+                        else
+                            rawTitle = card.TextContent;
+                    }
+                    // Score the title vs URL and pick the better one
+                    string normalisedTitle = ResultATagService.NormaliseString(rawTitle);
+                    int titleScore = ResultATagService.GetRankingScore(
+                        normalisedQuery,
+                        normalisedTitle
+                    );
 
-					string finalTitle;
-					int finalScore;
+                    string extractedUrl = ResultATagService.ExtractUrlPath(resultUrl);
+                    int urlScore = ResultATagService.GetRankingScore(
+                        normalisedQuery,
+                        ResultATagService.NormaliseString(extractedUrl)
+                    );
 
-					if (urlScore > titleScore)
-					{
-						finalTitle = ResultATagService.CleanTitle(extractedUrl);
-						finalScore = urlScore;
-					}
-					else
-					{
-						finalTitle = ResultATagService.CleanTitle(rawTitle);
-						finalScore = titleScore;
-					}
+                    string finalTitle;
+                    int finalScore;
 
-					var imgElement = card.QuerySelector("img");
+                    if (urlScore > titleScore)
+                    {
+                        finalTitle = ResultATagService.CleanTitle(extractedUrl);
+                        finalScore = urlScore;
+                    }
+                    else
+                    {
+                        finalTitle = ResultATagService.CleanTitle(rawTitle);
+                        finalScore = titleScore;
+                    }
 
-					yield return CreateResult(
-						link: link,
-						title: finalTitle,
-						resultUrl: resultUrl,
-						score: finalScore,
-						imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
-						altText: imgElement?.GetAttribute("alt"));
-				}
-			}
-		}
+                    var imgElement = card.QuerySelector("img");
 
-		private static Result CreateResult(Link link, string title, string resultUrl, int score, string? imageUrl = null, string? altText = null)
-		{
-			return new Result
-			{
-				Title = title,
-				ResultUrl = resultUrl,
-				WebsiteTitle = link.Title,
-				SearchUrl = link.SearchUrl,
-				WebsiteStarred = link.Starred,
-				Score = score,
-				Category = link.Category,
-				ImageUrl = imageUrl,
-				AltText = altText
-			};
-		}
-	}
+                    yield return CreateResult(
+                        link: link,
+                        title: finalTitle,
+                        resultUrl: resultUrl,
+                        score: finalScore,
+                        imageUrl: ResultCardService.GetImageUrlFromElement(link.Url, imgElement),
+                        altText: imgElement?.GetAttribute("alt")
+                    );
+                }
+            }
+        }
+
+        private static Result CreateResult(
+            Link link,
+            string title,
+            string resultUrl,
+            int score,
+            string? imageUrl = null,
+            string? altText = null
+        )
+        {
+            return new Result
+            {
+                Title = title,
+                ResultUrl = resultUrl,
+                WebsiteTitle = link.Title,
+                SearchUrl = link.SearchUrl,
+                WebsiteStarred = link.Starred,
+                Score = score,
+                Category = link.Category,
+                ImageUrl = imageUrl,
+                AltText = altText,
+            };
+        }
+    }
 }

@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>spyglass_backend</RootNamespace>
+    <DefaultItemExcludes>$(DefaultItemExcludes);spyglass-backend.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

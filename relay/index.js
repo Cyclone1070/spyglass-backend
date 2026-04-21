@@ -1,7 +1,11 @@
-const express = require('express');
-const axios = require('axios');
+import express from 'express';
+import { get } from 'axios';
 const app = express();
 const port = 3128;
+
+app.get('/health', (_req, res) => {
+    res.status(200).send('OK');
+});
 
 app.get('/fetch', async (req, res) => {
     const targetUrl = req.query.url;
@@ -12,7 +16,7 @@ app.get('/fetch', async (req, res) => {
     console.log(`Relaying request to: ${targetUrl}`);
 
     try {
-        const response = await axios.get(targetUrl, {
+        const response = await get(targetUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
