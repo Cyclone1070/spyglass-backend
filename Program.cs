@@ -64,6 +64,7 @@ builder.Services.AddScoped(sp =>
 // Add custom services
 builder.Services.AddScoped<MongoLinkService>();
 builder.Services.AddSingleton<WebsiteLinkService>();
+builder.Services.AddHostedService<ScraperBackgroundService>();
 builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<MegathreadService>();
 builder.Services.AddScoped<MongoResultService>();
