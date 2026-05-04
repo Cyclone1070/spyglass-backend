@@ -12,3 +12,10 @@ services:
       # This tells Docker Compose to get the connection string from the .env file
       # or from an environment variable on the host machine.
       - MongoDbSettings__ConnectionString=${MONGO_CONNECTION_STRING}
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_BACKEND_TOKEN}

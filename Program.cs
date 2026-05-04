@@ -115,7 +115,10 @@ else
 								.AllowAnyMethod());
 }
 
-app.UseHttpsRedirection();
+if (app.Configuration["ENABLE_HTTPS_REDIRECT"] == "true")
+{
+	app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 app.MapControllers();
 
