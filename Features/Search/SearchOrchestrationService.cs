@@ -99,8 +99,10 @@ namespace spyglass_backend.Features.Search
                     await searchStream.Writer.WriteAsync(resultDto);
                 }
 
-                // After all results are in, sort the cached results by score
-                var sortedResults = results.OrderByDescending(r => r.Score).ToList();
+                // After all results are in, sort the cached results by score and then by starred status
+                var sortedResults = results.OrderByDescending(r => r.Score)
+                                           .ThenByDescending(r => r.WebsiteStarred)
+                                           .ToList();
                 searchStream.SortCacheByScore();
 
                 var storedResult = new StoredResult
