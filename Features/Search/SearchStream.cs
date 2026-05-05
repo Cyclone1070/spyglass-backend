@@ -35,7 +35,7 @@ namespace spyglass_backend.Features.Search
 			{
 				// OrderByDescending returns a new sorted sequence,
 				// so we create a new list from it and replace the old one.
-				_cachedResults = [.. _cachedResults.OrderByDescending(r => r.Score)];
+				_cachedResults = [.. _cachedResults.OrderByDescending(r => r.Score).ThenByDescending(r => r.WebsiteStarred)];
 			}
 		}
 	}
