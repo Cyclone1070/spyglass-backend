@@ -32,6 +32,14 @@ namespace spyglass_backend.Features.Links
                 .Categories.SelectMany(category =>
                 {
                     var headerElements = document.QuerySelectorAll(category.Selector);
+                    if (headerElements.Length == 0)
+                    {
+                        _logger.LogWarning(
+                            "Selector '{Selector}' for category '{Category}' matched no elements. FMHY page structure may have changed.",
+                            category.Selector,
+                            category.Name
+                        );
+                    }
                     return headerElements.SelectMany(header =>
                         ScrapeLinksFromHeader(header, category.Name)
                     );
