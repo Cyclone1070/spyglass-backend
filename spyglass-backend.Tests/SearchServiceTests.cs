@@ -205,5 +205,51 @@ namespace spyglass_backend.Tests
                 Times.Once
             );
         }
+
+        [Fact]
+        public async Task SearchLinksAsync_SupportsJsClickNavigatingCards()
+        {
+            // Arrange
+            var html =
+                @"
+                <div class='item' data-href='/movie-1'>
+                    <span class='title'>Batman Begins</span>
+                </div>
+                <div class='item' onclick='location.href=&quot;/movie-2&quot;'>
+                    <span class='title'>The Dark Knight</span>
+                </div>";
+            var (doc, url) = await CreateDocument(html);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((doc, 0L));
+
+            var service = new SearchService(
+                _loggerMock.Object,
+                _scraperRules,
+                _searchSettings,
+                _webServiceMock.Object
+            );
+
+            var link = new Link
+            {
+                Url = "https://search.com",
+                Title = "Movish",
+                Category = "Movies",
+                Starred = false,
+                CardSelector = ".item",
+                SearchUrl = "https://search.com/s?q={0}",
+            };
+
+            // Act
+            var results = await service
+                .SearchLinksAsync("batman", new List<Link> { link })
+                .ToListAsync();
+
+            // Assert
+            Assert.Equal(2, results.Count);
+            Assert.Contains(results, r => r.ResultUrl.Contains("/movie-1") && r.Title == "Batman Begins");
+            Assert.Contains(results, r => r.ResultUrl.Contains("/movie-2") && r.Title == "The Dark Knight");
+        }
     }
 }

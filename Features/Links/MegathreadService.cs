@@ -173,39 +173,43 @@ namespace spyglass_backend.Features.Links
                 new Uri(websiteLink.Url),
                 useProxy
             );
-            var noResultBlacklist = noResultDoc
-                .All.Select(e =>
-                {
-                    if (e.ParentElement == null)
+            var noResultBlacklist = new HashSet<ElementSelector>();
+            if (ResultCardService.IsNoResultsPage(noResultDoc))
+            {
+                noResultBlacklist = noResultDoc
+                    .All.Select(e =>
                     {
-                        return new ElementSelector
+                        if (e.ParentElement == null)
                         {
-                            Parent = string.Empty,
-                            Element = string.Empty,
-                        };
-                    }
+                            return new ElementSelector
+                            {
+                                Parent = string.Empty,
+                                Element = string.Empty,
+                            };
+                        }
 
-                    var baseElementSelector = WebService.GetElementSelector(e);
-                    var fullParentPath = WebService.GetTagPath(
-                        noResultDoc.DocumentElement,
-                        e.ParentElement
-                    );
-                    if (string.IsNullOrEmpty(fullParentPath))
-                    {
+                        var baseElementSelector = WebService.GetElementSelector(e);
+                        var fullParentPath = WebService.GetTagPath(
+                            noResultDoc.DocumentElement,
+                            e.ParentElement
+                        );
+                        if (string.IsNullOrEmpty(fullParentPath))
+                        {
+                            return new ElementSelector
+                            {
+                                Parent = string.Empty,
+                                Element = string.Empty,
+                            };
+                        }
                         return new ElementSelector
                         {
-                            Parent = string.Empty,
-                            Element = string.Empty,
+                            Parent = fullParentPath,
+                            Element = baseElementSelector.Element,
                         };
-                    }
-                    return new ElementSelector
-                    {
-                        Parent = fullParentPath,
-                        Element = baseElementSelector.Element,
-                    };
-                })
-                .Where(s => !string.IsNullOrEmpty(s.Element)) // Filter out empty selectors
-                .ToHashSet();
+                    })
+                    .Where(s => !string.IsNullOrEmpty(s.Element)) // Filter out empty selectors
+                    .ToHashSet();
+            }
 
             // Get the 2 documents with results
             var (withResultsDoc1, withResultsResponseTime1) =
@@ -227,7 +231,9 @@ namespace spyglass_backend.Features.Links
             var resultCardSelector = ResultCardService.FindResultCardSelector(
                 noResultBlacklist,
                 withResultsDoc1,
-                withResultsDoc2
+                withResultsDoc2,
+                queries[0],
+                queries[1]
             );
 
             finalLinks.Add(

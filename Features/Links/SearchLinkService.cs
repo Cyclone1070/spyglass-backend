@@ -27,28 +27,55 @@ namespace spyglass_backend.Features.Links
                 useProxy: useProxy
             );
 
-            // --- Phase 1: Filter for likely search forms ---
-            // AngleSharp's Filter() is a LINQ extension method for filtering
-            var searchForms = document.QuerySelectorAll("form").Where(IsLikelySearchForm);
+            // --- Phase 1 & 2: Find all potential search inputs globally on the page ---
+            var allInputs = document.QuerySelectorAll("input[type='search'], input[type='text']");
+            var candidateInputs = new List<IElement>();
 
-            // --- Phase 2: Apply the "GET request only" constraint ---
-            var getForms = searchForms
-                .Where(s =>
-                {
-                    var method = s.GetAttribute("method")?.ToLower() ?? "";
-                    return method?.Length == 0 || method == "get";
-                })
-                .ToList();
-
-            if (getForms.Count == 0)
+            foreach (var input in allInputs)
             {
-                // No HTML form found — probe common search URL patterns
+                var form = input.Closest("form");
+                if (form != null)
+                {
+                    if (!IsLikelySearchForm(form)) continue;
+                    var method = form.GetAttribute("method")?.ToLower() ?? "";
+                    if (method.Length > 0 && method != "get") continue;
+                }
+                else
+                {
+                    var parentText = input.ParentElement?.TextContent ?? "";
+                    if (NonSearchKeywordsRegex().IsMatch(parentText)) continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(input.GetAttribute("name"))) continue;
+
+                candidateInputs.Add(input);
+            }
+
+            IElement? bestInputSelection = null;
+            if (candidateInputs.Count > 0)
+            {
+                try
+                {
+                    bestInputSelection = ChooseBestSearchInput(candidateInputs, link.Url);
+                }
+                catch (InvalidOperationException)
+                {
+                    // No suitable input scored > 0
+                }
+            }
+
+            // --- Phase 3: If no valid search input found, probe common search URL patterns ---
+            if (bestInputSelection == null)
+            {
+                // No HTML form/input found — probe common search URL patterns
                 // (e.g., for SPA streaming sites with server-rendered search)
                 var probePatterns = new[]
                 {
                     "/search/{0}",
                     "/search?q={0}",
                     "/?s={0}",
+                    "/search.php?q={0}",
+                    "/index.php?s={0}",
                 };
 
                 var probeQueries = new[] { "batman", "mario", "sherlock", "naruto", "chrome" };
@@ -101,48 +128,39 @@ namespace spyglass_backend.Features.Links
                 }
 
                 throw new InvalidOperationException(
-                    "No likely search forms with method=GET were found."
+                    "No likely search forms, inputs, or working probe endpoints were found."
                 );
             }
 
-            // --- Phase 3: Find forms with exactly one valid input ---
-            var validSingleInputs = new List<IElement>();
-            foreach (var formSelection in getForms)
-            {
-                var inputsInThisForm = formSelection.QuerySelectorAll(
-                    "input[type='search'], input[type='text']"
-                );
-                if (inputsInThisForm.Length == 1)
-                {
-                    validSingleInputs.Add(inputsInThisForm.First());
-                }
-            }
-
-            // --- Phase 4: Use the scoring engine to choose the single best candidate ---
-            var bestInputSelection = ChooseBestSearchInput(validSingleInputs, link.Url);
-
-            // --- Phase 5: Construct the final SearchUrl template ---
-            var form =
-                bestInputSelection.Closest("form")
-                ?? throw new InvalidOperationException(
-                    "The selected search input is not contained within a <form> element."
-                );
+            // --- Phase 4: Construct the final SearchUrl template ---
             var inputName =
                 bestInputSelection.GetAttribute("name")
                 ?? throw new InvalidOperationException(
                     "The selected search input does not have a 'name' attribute."
                 );
 
-            var actionUrl = form.GetAttribute("action") ?? "";
-
-            // Use UriBuilder for idiomatic C# Url manipulation, ensuring absolute Urls.
-            var absoluteActionUri = new Uri(new Uri(link.Url), actionUrl);
-            var uriBuilder = new UriBuilder(absoluteActionUri)
+            var formElement = bestInputSelection.Closest("form");
+            string searchUrlTemplate;
+            if (formElement != null)
             {
-                // This creates a query string template like "q={0}"
-                Query = $"{Uri.EscapeDataString(inputName)}={{0}}",
-            };
-            var searchUrlTemplate = uriBuilder.ToString();
+                var actionUrl = formElement.GetAttribute("action") ?? "";
+                var absoluteActionUri = new Uri(new Uri(link.Url), actionUrl);
+                var uriBuilder = new UriBuilder(absoluteActionUri)
+                {
+                    Query = $"{Uri.EscapeDataString(inputName)}={{0}}",
+                };
+                searchUrlTemplate = uriBuilder.ToString();
+            }
+            else
+            {
+                // Formless input: submit query parameter directly to base origin
+                var baseUri = new Uri(link.Url);
+                var uriBuilder = new UriBuilder(baseUri)
+                {
+                    Query = $"{Uri.EscapeDataString(inputName)}={{0}}"
+                };
+                searchUrlTemplate = uriBuilder.ToString();
+            }
 
             _logger.LogInformation(
                 "Found search link for {Title}: {Url}",

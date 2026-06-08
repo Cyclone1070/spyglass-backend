@@ -5,15 +5,39 @@ namespace spyglass_backend.Features.WebUtils
 {
     public static class ResultCardService
     {
+        public static bool IsNoResultsPage(IDocument document)
+        {
+            var text = document.Body?.TextContent ?? "";
+            string[] negativeKeywords =
+            [
+                "no results",
+                "0 results",
+                "no matches",
+                "not found",
+                "nothing found",
+                "0 matches",
+                "try another",
+                "no files",
+                "no torrents",
+                "empty",
+                "no search results",
+                "no movies",
+                "no video"
+            ];
+            return negativeKeywords.Any(key => text.Contains(key, StringComparison.OrdinalIgnoreCase));
+        }
+
         public static ElementSelector FindResultCardSelector(
             HashSet<ElementSelector> noResultBlacklist,
             IDocument withResultsDoc1,
-            IDocument withResultsDoc2
+            IDocument withResultsDoc2,
+            string? query1 = null,
+            string? query2 = null
         )
         {
             // Find the repeating pattern, do it twice to get a wider variety of cards in case some idiot fucked up their html
-            var pattern1 = PerformDiffAnalysis(withResultsDoc1, noResultBlacklist);
-            var pattern2 = PerformDiffAnalysis(withResultsDoc2, noResultBlacklist);
+            var pattern1 = PerformDiffAnalysis(withResultsDoc1, noResultBlacklist, query1);
+            var pattern2 = PerformDiffAnalysis(withResultsDoc2, noResultBlacklist, query2);
 
             if (pattern1.Parent != pattern2.Parent)
             {
@@ -30,7 +54,8 @@ namespace spyglass_backend.Features.WebUtils
         // Finds repeating element patterns that do NOT exist on the blacklist.
         private static RepeatingPattern PerformDiffAnalysis(
             IDocument withResultsDoc,
-            HashSet<ElementSelector> blacklist
+            HashSet<ElementSelector> blacklist,
+            string? query
         )
         {
             // Filter elements to only those present in the 'diff' selector set.
@@ -74,17 +99,12 @@ namespace spyglass_backend.Features.WebUtils
                             {
                                 return false;
                             }
-                            var isCardATag = firstElementInGroup.TagName.Equals(
-                                "A",
-                                StringComparison.OrdinalIgnoreCase
-                            );
-                            var containsATag =
+                            var isCardNavigable = IsNavigable(firstElementInGroup);
+                            var containsNavigable =
                                 patternGroup.Count() > 1
-                                && // It must be a repeating pattern.
-                                firstElementInGroup.Children.Length > 0
-                                && // Must have children.
-                                firstElementInGroup.QuerySelector("a") != null; // A descendant must be an <a> tag.
-                            return isCardATag || containsATag; // Must be or contain an <a> tag.
+                                && (firstElementInGroup.Children.Length > 0)
+                                && ContainsNavigable(firstElementInGroup);
+                            return isCardNavigable || containsNavigable;
                         })
                         // 4. Project the valid groups into our record for scoring.
                         .Select(validGroup =>
@@ -99,6 +119,27 @@ namespace spyglass_backend.Features.WebUtils
                         })
                 )
                 .ToList();
+
+            if (!string.IsNullOrEmpty(query))
+            {
+                var normalizedQuery = query.ToLowerInvariant();
+                var filtered = validPatterns
+                    .Where(p => p.Elements.Any(el =>
+                    {
+                        var text = el.TextContent.ToLowerInvariant();
+                        var href = el.QuerySelector("a")?.GetAttribute("href")?.ToLowerInvariant() ?? "";
+                        var cardHref = el.TagName.Equals("A", StringComparison.OrdinalIgnoreCase)
+                            ? el.GetAttribute("href")?.ToLowerInvariant() ?? ""
+                            : "";
+                        return text.Contains(normalizedQuery) || href.Contains(normalizedQuery) || cardHref.Contains(normalizedQuery);
+                    }))
+                    .ToList();
+
+                if (filtered.Count > 0)
+                {
+                    validPatterns = filtered;
+                }
+            }
 
             if (validPatterns.Count == 0)
             {
@@ -218,6 +259,36 @@ namespace spyglass_backend.Features.WebUtils
                 }
                 current = current.ParentElement;
             }
+            return false;
+        }
+
+        private static bool IsNavigable(IElement el)
+        {
+            if (el.TagName.Equals("A", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            string[] navAttrs = ["onclick", "data-href", "data-link", "data-url"];
+            if (navAttrs.Any(attr => el.HasAttribute(attr) && !string.IsNullOrWhiteSpace(el.GetAttribute(attr))))
+                return true;
+
+            if (el.GetAttribute("role")?.ToLowerInvariant() == "link")
+                return true;
+
+            return false;
+        }
+
+        private static bool ContainsNavigable(IElement el)
+        {
+            if (el.QuerySelector("a") != null)
+                return true;
+
+            var descendants = el.QuerySelectorAll("*");
+            foreach (var d in descendants)
+            {
+                if (IsNavigable(d))
+                    return true;
+            }
+
             return false;
         }
     }
