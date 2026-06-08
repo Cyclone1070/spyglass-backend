@@ -35,8 +35,8 @@ namespace spyglass_backend.Features.WebUtils
             return score;
         }
 
-        // REGEX 1: Matches anything that ISN'T a letter, number, or space.
-        [GeneratedRegex(@"\p{P}")]
+        // REGEX 1: Matches anything that ISN'T a letter, number, space, apostrophe, or hyphen.
+        [GeneratedRegex(@"[^\p{L}\p{N}\s'-]")]
         private static partial Regex PunctuationRegex();
 
         // Normalizes strings by lowercasing, removing punctuation, and standardizing spaces.

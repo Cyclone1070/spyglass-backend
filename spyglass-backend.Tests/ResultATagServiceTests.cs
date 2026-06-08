@@ -7,7 +7,8 @@ namespace spyglass_backend.Tests
     {
         [Theory]
         [InlineData("The Batman (2022)", "the batman 2022")]
-        [InlineData("Spider-Man: No Way Home!!!", "spiderman no way home")]
+        [InlineData("Spider-Man: No Way Home!!!", "spider-man no way home")]
+        [InlineData("It's Always Sunny", "it's always sunny")]
         [InlineData("   extra   spaces   ", "extra spaces")]
         public void NormaliseString_CleansInputCorrectly(string input, string expected)
         {

@@ -161,5 +161,49 @@ namespace spyglass_backend.Tests
             Assert.Contains(results, r => r.ResultUrl.Contains("/movie-999")); // Should pick the UNIQUE one
             Assert.DoesNotContain(results, r => r.ResultUrl.Contains("/category-action"));
         }
+
+        [Fact]
+        public async Task SearchLinksAsync_PreservesSpecialCharactersInSearchUrl()
+        {
+            // Arrange
+            var html = @"<div class='item'><a href='/movie-1'>It's Always Sunny</a></div>";
+            var (doc, url) = await CreateDocument(html);
+            string expectedUrl = "https://search.com/s?q=it%27s%20always%20sunny";
+
+            _webServiceMock
+                .Setup(w =>
+                    w.GetHtmlDocumentAsync(expectedUrl, It.IsAny<Uri?>(), It.IsAny<bool>())
+                )
+                .ReturnsAsync((doc, 0L));
+
+            var service = new SearchService(
+                _loggerMock.Object,
+                _scraperRules,
+                _searchSettings,
+                _webServiceMock.Object
+            );
+
+            var link = new Link
+            {
+                Url = "https://search.com",
+                Title = "Movish",
+                Category = "Movies",
+                Starred = false,
+                CardSelector = ".item",
+                SearchUrl = "https://search.com/s?q={0}",
+            };
+
+            // Act
+            var normalised = ResultATagService.NormaliseString("it's always sunny");
+            var results = await service
+                .SearchLinksAsync(normalised, new List<Link> { link })
+                .ToListAsync();
+
+            // Assert
+            _webServiceMock.Verify(
+                w => w.GetHtmlDocumentAsync(expectedUrl, It.IsAny<Uri?>(), It.IsAny<bool>()),
+                Times.Once
+            );
+        }
     }
 }

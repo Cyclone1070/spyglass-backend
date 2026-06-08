@@ -3,6 +3,7 @@ using Moq.Protected;
 using spyglass_backend.Features.WebUtils;
 using System.Net;
 using System.Diagnostics;
+using AngleSharp;
 
 namespace spyglass_backend.Tests;
 
@@ -69,5 +70,39 @@ public class WebServiceTests
             ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.ToString().Contains("proxy-spyglass.cyc.fyi/health")),
             ItExpr.IsAny<CancellationToken>()
         );
+    }
+
+    [Fact]
+    public async Task BuildClassSelector_FiltersOutInvalidCssClasses()
+    {
+        // Arrange
+        var context = BrowsingContext.New(AngleSharp.Configuration.Default);
+        var document = await context.OpenAsync(req => req.Content("<div class=\"grid 2xl:grid bg-[#ffffff] text-red-500\"></div>"));
+        var element = document.QuerySelector("div")!;
+
+        // Act
+        var selector = WebService.BuildClassSelector(element);
+
+        // Assert
+        Assert.Equal("div.grid.text-red-500", selector);
+    }
+
+    [Fact]
+    public async Task GetCommonSelector_FiltersOutInvalidCssClasses()
+    {
+        // Arrange
+        var context = BrowsingContext.New(AngleSharp.Configuration.Default);
+        var document = await context.OpenAsync(req => req.Content(@"
+            <div class=""item grid 2xl:grid bg-[#ffffff] text-red-500""></div>
+            <div class=""item grid 2xl:grid bg-[#ffffff] text-blue-500""></div>
+        "));
+        var elements = document.QuerySelectorAll(".item");
+
+        // Act
+        var selector = WebService.GetCommonSelector("body", elements);
+
+        // Assert
+        Assert.Equal("body", selector.Parent);
+        Assert.Equal("div.grid.item", selector.Element);
     }
 }

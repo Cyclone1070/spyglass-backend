@@ -53,6 +53,9 @@ namespace spyglass_backend.Features.WebUtils
                         Element = baseElementSelector.Element,
                     };
 
+                    if (IsLayoutElement(e))
+                        return false;
+
                     return !blacklist.Contains(fullSelector);
                 })
                 .ToList();
@@ -186,6 +189,36 @@ namespace spyglass_backend.Features.WebUtils
             }
 
             return null; // No valid image URL found in any of the specified attributes.
+        }
+
+        private static bool IsLayoutElement(IElement element)
+        {
+            var current = element;
+            while (current != null)
+            {
+                var tagName = current.TagName.ToLowerInvariant();
+                if (tagName == "nav" || tagName == "header" || tagName == "footer" || tagName == "aside")
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(current.ClassName))
+                {
+                    var className = current.ClassName.ToLowerInvariant();
+                    if (className.Contains("menu") || 
+                        className.Contains("dropdown") || 
+                        className.Contains("nav") || 
+                        className.Contains("sidebar") || 
+                        className.Contains("filter") || 
+                        className.Contains("widget") || 
+                        className.Contains("popup"))
+                    {
+                        return true;
+                    }
+                }
+                current = current.ParentElement;
+            }
+            return false;
         }
     }
 }

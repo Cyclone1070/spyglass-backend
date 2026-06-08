@@ -160,6 +160,7 @@ namespace spyglass_backend.Features.WebUtils
             var commonClasses = elements
                 .Select(e => e.ClassList as IEnumerable<string>) // Cast to IEnumerable for Aggregate
                 .Aggregate((current, next) => current.Intersect(next))
+                .Where(IsValidCssClass)
                 .Order()
                 .ToList();
 
@@ -183,7 +184,9 @@ namespace spyglass_backend.Features.WebUtils
 
             // --- MODIFIED LOGIC ---
             var classes = element
-                .ClassList.Select(EscapeCssIdentifier) // Escape each class name
+                .ClassList
+                .Where(IsValidCssClass)
+                .Select(EscapeCssIdentifier) // Escape each class name
                 .Order()
                 .ToList();
 
@@ -230,6 +233,15 @@ namespace spyglass_backend.Features.WebUtils
             // This regex matches any character that is NOT a-z, A-Z, 0-9, underscore, or hyphen.
             // The replacement pattern "\\$&" inserts a literal backslash before the matched character.
             return InvalidCssCharRegex().Replace(identifier, @"\$&");
+        }
+
+        private static bool IsValidCssClass(string className)
+        {
+            return !string.IsNullOrEmpty(className)
+                && !char.IsDigit(className[0])
+                && !className.Contains(':')
+                && !className.Contains('[')
+                && !className.Contains(']');
         }
 
         // Generates a CSS selector path from a parent element to a child element, excluding the parent itself.
