@@ -10,7 +10,7 @@ namespace spyglass_backend.Features.Links
         ILogger<MegathreadService> logger,
         IOptions<ScraperRules> scraperRules,
         IOptions<SearchSettings> searchSettings,
-        WebService webService,
+        IWebService webService,
         WebsiteLinkService websiteLinkService,
         SearchLinkService searchLinkService
     )
@@ -18,7 +18,7 @@ namespace spyglass_backend.Features.Links
         private readonly ILogger<MegathreadService> _logger = logger;
         private readonly ScraperRules _scraperRules = scraperRules.Value;
         private readonly SearchSettings _searchSettings = searchSettings.Value;
-        private readonly WebService _webService = webService;
+        private readonly IWebService _webService = webService;
         private readonly WebsiteLinkService _websiteLinkService = websiteLinkService;
         private readonly SearchLinkService _searchLinkService = searchLinkService;
 

@@ -27,11 +27,18 @@ namespace spyglass_backend.Tests
             
             var rules = new ScraperRules
             {
+                MegathreadUrls = new List<string>(),
+                MegathreadSkipKeywords = new List<string> { "skipme" },
+                SearchSkipKeywords = new List<string>(),
                 Categories = new List<CategoryRule>
                 {
                     new CategoryRule { Name = "Movies", Selector = "#movies" }
                 },
-                MegathreadSkipKeywords = new List<string> { "skipme" }
+                CardFindingQueries = new CardFindingQueries
+                {
+                    InvalidQuery = string.Empty,
+                    ValidQueries = new Dictionary<string, string[]>()
+                }
             };
             _rules = Options.Create(rules);
         }
@@ -102,6 +109,98 @@ namespace spyglass_backend.Tests
         }
 
         [Fact]
+        public async Task ScrapeWebsiteLinksAsync_ScrapesMultipleULsUnderSameHeading()
+        {
+            // Arrange
+            var html = @"
+                <h2 id='movies'>Movies</h2>
+                <ul>
+                    <li><a href='https://site1.com'>Site 1</a></li>
+                </ul>
+                <ul>
+                    <li><a href='https://site2.com'>Site 2</a></li>
+                </ul>";
+            SetupHttpClient(html);
+            var service = new WebsiteLinkService(_loggerMock.Object, _httpClientFactoryMock.Object, _rules);
+
+            // Act
+            var result = (await service.ScrapeWebsiteLinksAsync("https://test.com")).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Title == "Site 1");
+            Assert.Contains(result, r => r.Title == "Site 2");
+        }
+
+        [Fact]
+        public async Task ScrapeWebsiteLinksAsync_ScrapesMultipleULsWithInterleavedElements()
+        {
+            // Arrange
+            var html = @"
+                <h2 id='movies'>Movies</h2>
+                <div class='tip'>Tip text</div>
+                <ul>
+                    <li><a href='https://site1.com'>Site 1</a></li>
+                </ul>
+                <p>Some paragraph</p>
+                <ul>
+                    <li><a href='https://site2.com'>Site 2</a></li>
+                </ul>";
+            SetupHttpClient(html);
+            var service = new WebsiteLinkService(_loggerMock.Object, _httpClientFactoryMock.Object, _rules);
+
+            // Act
+            var result = (await service.ScrapeWebsiteLinksAsync("https://test.com")).ToList();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Title == "Site 1");
+            Assert.Contains(result, r => r.Title == "Site 2");
+        }
+
+        [Fact]
+        public async Task ScrapeWebsiteLinksAsync_StopsAtNextHeadingBoundary()
+        {
+            // Arrange
+            var html = @"
+                <h2 id='movies'>Movies</h2>
+                <ul>
+                    <li><a href='https://movie-site.com'>Movie Site</a></li>
+                </ul>
+                <h2>Next Section</h2>
+                <ul>
+                    <li><a href='https://tv-site.com'>TV Site</a></li>
+                </ul>";
+            SetupHttpClient(html);
+            var service = new WebsiteLinkService(_loggerMock.Object, _httpClientFactoryMock.Object, _rules);
+
+            // Act
+            var result = (await service.ScrapeWebsiteLinksAsync("https://test.com")).ToList();
+
+            // Assert - only #movies is configured, so we should only scrape Movie Site
+            Assert.Single(result);
+            Assert.Equal("Movie Site", result[0].Title);
+        }
+
+        [Fact]
+        public async Task ScrapeWebsiteLinksAsync_NoULsReturnsEmpty()
+        {
+            // Arrange
+            var html = @"
+                <h2 id='movies'>Movies</h2>
+                <div class='tip'>No links here</div>
+                <p>Just text</p>";
+            SetupHttpClient(html);
+            var service = new WebsiteLinkService(_loggerMock.Object, _httpClientFactoryMock.Object, _rules);
+
+            // Act
+            var result = (await service.ScrapeWebsiteLinksAsync("https://test.com")).ToList();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
         public async Task ScrapeWebsiteLinksAsync_HandlesDirtyMegathreadStructure()
         {
             // Arrange
@@ -128,9 +227,10 @@ namespace spyglass_backend.Tests
             var result = (await service.ScrapeWebsiteLinksAsync("https://test.com")).ToList();
 
             // Assert
-            Assert.Single(result); // Only 'The Starred Movie' is valid
-            Assert.Equal("The Starred Movie", result[0].Title);
-            Assert.True(result[0].Starred);
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Title == "The Starred Movie");
+            Assert.Contains(result, r => r.Title == "Anchor Link");
+            Assert.True(result.First(r => r.Title == "The Starred Movie").Starred);
         }
     }
 }

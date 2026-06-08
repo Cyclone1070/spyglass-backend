@@ -8,7 +8,7 @@ using spyglass_backend.Features.Links;
 
 namespace spyglass_backend.Features.WebUtils
 {
-    public partial class WebService(IHttpClientFactory httpClientFactory)
+    public partial class WebService(IHttpClientFactory httpClientFactory) : IWebService
     {
         private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
         private static bool? _proxyAvailable;

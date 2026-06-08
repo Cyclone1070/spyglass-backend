@@ -6,10 +6,10 @@ using spyglass_backend.Features.WebUtils;
 
 namespace spyglass_backend.Features.Links
 {
-    public partial class SearchLinkService(ILogger<SearchLinkService> logger, WebService webService)
+    public partial class SearchLinkService(ILogger<SearchLinkService> logger, IWebService webService)
     {
         private readonly ILogger<SearchLinkService> _logger = logger;
-        private readonly WebService _webService = webService;
+        private readonly IWebService _webService = webService;
 
         public async Task<SearchLink> ScrapeSearchLinksAsync(
             WebsiteLink link,
@@ -42,6 +42,64 @@ namespace spyglass_backend.Features.Links
 
             if (getForms.Count == 0)
             {
+                // No HTML form found — probe common search URL patterns
+                // (e.g., for SPA streaming sites with server-rendered search)
+                var probePatterns = new[]
+                {
+                    "/search/{0}",
+                    "/search?q={0}",
+                    "/?s={0}",
+                };
+
+                var probeQueries = new[] { "batman", "mario", "sherlock", "naruto", "chrome" };
+
+                var baseOrigin = new Uri(link.Url).GetLeftPart(UriPartial.Authority);
+
+                foreach (var pattern in probePatterns)
+                {
+                    foreach (var probeQuery in probeQueries)
+                    {
+                        var formattedProbe = pattern.Replace("{0}", probeQuery);
+                        var probeUrl = baseOrigin + formattedProbe;
+
+                        try
+                        {
+                            var (probeDoc, _) = await _webService.GetHtmlDocumentAsync(
+                                probeUrl,
+                                useProxy: useProxy
+                            );
+
+                            if (probeDoc == null) continue;
+
+                            var bodyText = probeDoc.Body?.TextContent ?? "";
+                            if (bodyText.Contains(probeQuery, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Construct SearchUrl template using the pattern with {0} placeholder
+                                var probeSearchUrl = baseOrigin + pattern;
+
+                                _logger.LogInformation(
+                                    "Found search link via probing for {Title}: {Url}",
+                                    link.Title,
+                                    probeSearchUrl
+                                );
+
+                                return new SearchLink
+                                {
+                                    Title = link.Title,
+                                    Url = link.Url,
+                                    Category = link.Category,
+                                    Starred = link.Starred,
+                                    SearchUrl = probeSearchUrl,
+                                };
+                            }
+                        }
+                        catch (HttpRequestException ex)
+                        {
+                            _logger.LogDebug(ex, "Probe failed for {ProbeUrl}", probeUrl);
+                        }
+                    }
+                }
+
                 throw new InvalidOperationException(
                     "No likely search forms with method=GET were found."
                 );

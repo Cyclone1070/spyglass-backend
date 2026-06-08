@@ -50,8 +50,8 @@ namespace spyglass_backend.Features.WebUtils
             // STEP 1: Use the first Regex to remove all punctuation.
             var noPunctuation = PunctuationRegex().Replace(lowercased, "");
 
-            // STEP 2: Use the second Regex to clean up and standardize spaces.
-            return CleanTitle(noPunctuation);
+            // STEP 2: Collapse whitespace and trim. No capitalisation — this is for comparison, not display.
+            return WhitespaceRegex().Replace(noPunctuation, " ").Trim();
         }
 
         public static string ExtractUrlPath(string resultUrl)

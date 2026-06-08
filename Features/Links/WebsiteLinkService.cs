@@ -52,37 +52,55 @@ namespace spyglass_backend.Features.Links
             string categoryName
         )
         {
-            // The links are usually within a <ul> tag.
-            // However, FMHY sometimes inserts <div class="tip"> or other blocks between the header and the list.
-            // We iterate through siblings until we find the first <ul>.
-            var listElement = headerElement.NextElementSibling;
-            while (listElement != null && listElement.TagName != "UL")
+            // Determine boundary heading tags based on the current heading level.
+            // For h2: stop at next h2
+            // For h3: stop at next h3 or h2
+            // For h4: stop at next h4, h3, or h2
+            var boundaryTags = headerElement.TagName.ToUpperInvariant() switch
             {
-                listElement = listElement.NextElementSibling;
+                "H2" => new[] { "H2" },
+                "H3" => new[] { "H3", "H2" },
+                "H4" => new[] { "H4", "H3", "H2" },
+                _ => new[] { "H2", "H3", "H4", "H5", "H6" }
+            };
+
+            var allLinks = new List<WebsiteLink>();
+            var current = headerElement.NextElementSibling;
+
+            while (current != null)
+            {
+                // Stop if we hit a boundary heading
+                if (boundaryTags.Contains(current.TagName, StringComparer.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+
+                // If it's a <ul>, scrape its links
+                if (string.Equals(current.TagName, "UL", StringComparison.OrdinalIgnoreCase))
+                {
+                    var links = current
+                        .QuerySelectorAll("li a")
+                        .Select(linkElement => new
+                        {
+                            Element = linkElement,
+                            ParentLi = linkElement.Closest("li"),
+                        })
+                        .Where(x => IsValidLink(x.Element, x.ParentLi))
+                        .Select(x => new WebsiteLink
+                        {
+                            Title = x.Element.TextContent.Trim(),
+                            Url = x.Element.GetAttribute("href") ?? string.Empty,
+                            Category = categoryName,
+                            Starred = x.ParentLi?.ClassList.Contains("starred") ?? false,
+                        });
+
+                    allLinks.AddRange(links);
+                }
+
+                current = current.NextElementSibling;
             }
 
-            if (listElement == null || listElement.TagName != "UL")
-            {
-                // Return an empty list of links if no <ul> is found.
-                return [];
-            }
-
-            // Use LINQ to find, filter, and transform the link elements into our WebsiteLink model.
-            return listElement
-                .QuerySelectorAll("li a")
-                .Select(linkElement => new
-                {
-                    Element = linkElement,
-                    ParentLi = linkElement.Closest("li"),
-                })
-                .Where(x => IsValidLink(x.Element, x.ParentLi))
-                .Select(x => new WebsiteLink
-                {
-                    Title = x.Element.TextContent.Trim(),
-                    Url = x.Element.GetAttribute("href") ?? string.Empty, // Ensure Url is never null
-                    Category = categoryName,
-                    Starred = x.ParentLi?.ClassList.Contains("starred") ?? false, // Safe navigation for null
-                });
+            return allLinks;
         }
 
         // This method checks if a link is valid based on several criteria like skip keywords.

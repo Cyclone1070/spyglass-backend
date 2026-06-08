@@ -12,9 +12,9 @@ namespace spyglass_backend.Tests
         {
             // Arrange
             var stream = new SearchStream();
-            var result1 = new ResultDto { Title = "Normal", Score = 10, WebsiteStarred = false };
-            var result2 = new ResultDto { Title = "Starred", Score = 10, WebsiteStarred = true };
-            var result3 = new ResultDto { Title = "Lower Score", Score = 5, WebsiteStarred = true };
+            var result1 = new ResultDto { Title = "Normal", Score = 10, WebsiteStarred = false, ResultUrl = "https://normal.com", Category = "General", WebsiteTitle = "Normal", SearchUrl = "https://search.com?q={0}" };
+            var result2 = new ResultDto { Title = "Starred", Score = 10, WebsiteStarred = true, ResultUrl = "https://starred.com", Category = "General", WebsiteTitle = "Starred", SearchUrl = "https://search.com?q={0}" };
+            var result3 = new ResultDto { Title = "Lower Score", Score = 5, WebsiteStarred = true, ResultUrl = "https://lower.com", Category = "General", WebsiteTitle = "Lower", SearchUrl = "https://search.com?q={0}" };
 
             stream.AddToCache(result1);
             stream.AddToCache(result2);

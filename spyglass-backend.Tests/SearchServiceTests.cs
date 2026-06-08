@@ -16,18 +16,34 @@ namespace spyglass_backend.Tests
     public class SearchServiceTests
     {
         private readonly Mock<ILogger<SearchService>> _loggerMock;
-        private readonly Mock<WebService> _webServiceMock;
+        private readonly Mock<IWebService> _webServiceMock;
         private readonly IOptions<ScraperRules> _scraperRules;
         private readonly IOptions<SearchSettings> _searchSettings;
 
         public SearchServiceTests()
         {
             _loggerMock = new Mock<ILogger<SearchService>>();
-            _webServiceMock = new Mock<WebService>(new Mock<IHttpClientFactory>().Object);
+            _webServiceMock = new Mock<IWebService>();
             _scraperRules = Options.Create(
-                new ScraperRules { SearchSkipKeywords = new List<string> { "ad" } }
+                new ScraperRules
+                {
+                    MegathreadUrls = new List<string>(),
+                    MegathreadSkipKeywords = new List<string>(),
+                    SearchSkipKeywords = new List<string> { "ad" },
+                    Categories = new List<CategoryRule>(),
+                    CardFindingQueries = new CardFindingQueries
+                    {
+                        InvalidQuery = string.Empty,
+                        ValidQueries = new Dictionary<string, string[]>()
+                    }
+                }
             );
-            _searchSettings = Options.Create(new SearchSettings { MaxParallelism = 1 });
+            _searchSettings = Options.Create(new SearchSettings
+            {
+                MaxParallelism = 1,
+                CacheDurationMinute = 60,
+                SearchTimeoutSecond = 30
+            });
         }
 
         private async Task<(AngleSharp.Dom.IDocument, string)> CreateDocument(string html)
@@ -55,9 +71,9 @@ namespace spyglass_backend.Tests
             var (doc, url) = await CreateDocument(html);
             _webServiceMock
                 .Setup(w =>
-                    w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())
+                    w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<Uri?>(), It.IsAny<bool>())
                 )
-                .ReturnsAsync((doc, url));
+                .ReturnsAsync((doc, 0L));
 
             var service = new SearchService(
                 _loggerMock.Object,
@@ -68,6 +84,9 @@ namespace spyglass_backend.Tests
             var link = new Link
             {
                 Url = "https://search.com",
+                Title = "The Batman",
+                Category = "Movies",
+                Starred = false,
                 CardSelector = ".result-card",
                 SearchUrl = "https://search.com/s?q={0}",
             };
@@ -111,9 +130,9 @@ namespace spyglass_backend.Tests
             var (doc, url) = await CreateDocument(html);
             _webServiceMock
                 .Setup(w =>
-                    w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>())
+                    w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<Uri?>(), It.IsAny<bool>())
                 )
-                .ReturnsAsync((doc, url));
+                .ReturnsAsync((doc, 0L));
 
             var service = new SearchService(
                 _loggerMock.Object,
@@ -124,6 +143,9 @@ namespace spyglass_backend.Tests
             var link = new Link
             {
                 Url = "https://search.com",
+                Title = "The Matrix",
+                Category = "Movies",
+                Starred = false,
                 CardSelector = ".item",
                 SearchUrl = "https://search.com/s?q={0}",
             };

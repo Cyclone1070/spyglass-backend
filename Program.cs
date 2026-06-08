@@ -69,7 +69,7 @@ builder.Services.AddSingleton<SearchLinkService>();
 builder.Services.AddSingleton<MegathreadService>();
 builder.Services.AddScoped<MongoResultService>();
 builder.Services.AddSingleton<SearchService>();
-builder.Services.AddSingleton<WebService>();
+builder.Services.AddSingleton<IWebService, WebService>();
 builder.Services.AddSingleton<SearchOrchestrationService>();
 
 var app = builder.Build();

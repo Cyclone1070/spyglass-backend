@@ -12,13 +12,13 @@ namespace spyglass_backend.Features.Search
         ILogger<SearchService> logger,
         IOptions<ScraperRules> scraperRules,
         IOptions<SearchSettings> searchSettings,
-        WebService webService
+        IWebService webService
     )
     {
         private readonly ILogger<SearchService> _logger = logger;
         private readonly ScraperRules _scraperRules = scraperRules.Value;
         private readonly SearchSettings _searchSettings = searchSettings.Value;
-        private readonly WebService _webService = webService;
+        private readonly IWebService _webService = webService;
 
         public IAsyncEnumerable<Result> SearchLinksAsync(string normalisedQuery, List<Link> links)
         {

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using AngleSharp;
 using Microsoft.Extensions.Logging;
@@ -13,12 +15,12 @@ namespace spyglass_backend.Tests
     public class SearchLinkServiceTests
     {
         private readonly Mock<ILogger<SearchLinkService>> _loggerMock;
-        private readonly Mock<WebService> _webServiceMock;
+        private readonly Mock<IWebService> _webServiceMock;
 
         public SearchLinkServiceTests()
         {
             _loggerMock = new Mock<ILogger<SearchLinkService>>();
-            _webServiceMock = new Mock<WebService>(new Mock<IHttpClientFactory>().Object);
+            _webServiceMock = new Mock<IWebService>();
         }
 
         private async Task<(AngleSharp.Dom.IDocument, string)> CreateDocument(string html)
@@ -50,11 +52,17 @@ namespace spyglass_backend.Tests
 
             var (doc, url) = await CreateDocument(html);
             _webServiceMock
-                .Setup(w => w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync((doc, url));
+                .Setup(w => w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((doc, 0L));
 
             var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
-            var link = new WebsiteLink { Url = "https://test.com", Title = "Test" };
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
 
             // Act
             var result = await service.ScrapeSearchLinksAsync(link);
@@ -84,11 +92,17 @@ namespace spyglass_backend.Tests
 
             var (doc, url) = await CreateDocument(html);
             _webServiceMock
-                .Setup(w => w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<bool>()))
-                .ReturnsAsync((doc, url));
+                .Setup(w => w.GetHtmlDocumentAsync(It.IsAny<string>(), It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((doc, 0L));
 
             var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
-            var link = new WebsiteLink { Url = "https://test.com", Title = "Test" };
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
 
             // Act
             var result = await service.ScrapeSearchLinksAsync(link);
@@ -96,6 +110,243 @@ namespace spyglass_backend.Tests
             // Assert
             Assert.Contains("/search?q={0}", result.SearchUrl);
             Assert.DoesNotContain("subscribe", result.SearchUrl);
+        }
+
+        [Fact]
+        public async Task ScrapeSearchLinksAsync_ProbesSearchSlashQuery_WhenNoFormFound()
+        {
+            // Arrange - main page has no forms
+            var mainHtml = @"<html><body>No forms here</body></html>";
+            var (mainDoc, _) = await CreateDocument(mainHtml);
+
+            // /search/batman returns content with batman
+            var probeHtml = @"<html><body>Showing results for batman</body></html>";
+            var (probeDoc, _) = await CreateDocument(probeHtml);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((mainDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((probeDoc, 0L));
+
+            var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
+
+            // Act
+            var result = await service.ScrapeSearchLinksAsync(link);
+
+            // Assert
+            Assert.Equal("https://test.com/search/{0}", result.SearchUrl);
+        }
+
+        [Fact]
+        public async Task ScrapeSearchLinksAsync_ProbesSearchQueryPattern_WhenSearchSlashFails()
+        {
+            // Arrange
+            var mainHtml = @"<html><body>No forms here</body></html>";
+            var (mainDoc, _) = await CreateDocument(mainHtml);
+
+            var probeHtml = @"<html><body>Showing results for batman</body></html>";
+            var (probeDoc, _) = await CreateDocument(probeHtml);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((mainDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ThrowsAsync(new HttpRequestException("Not found"));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search?q=batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((probeDoc, 0L));
+
+            var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
+
+            // Act
+            var result = await service.ScrapeSearchLinksAsync(link);
+
+            // Assert
+            Assert.Equal("https://test.com/search?q={0}", result.SearchUrl);
+        }
+
+        [Fact]
+        public async Task ScrapeSearchLinksAsync_ProbesSPattern_WhenSearchPatternsFail()
+        {
+            // Arrange
+            var mainHtml = @"<html><body>No forms here</body></html>";
+            var (mainDoc, _) = await CreateDocument(mainHtml);
+
+            var probeHtml = @"<html><body>Showing results for batman</body></html>";
+            var (probeDoc, _) = await CreateDocument(probeHtml);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((mainDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ThrowsAsync(new HttpRequestException("Not found"));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search?q=batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ThrowsAsync(new HttpRequestException("Not found"));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/?s=batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((probeDoc, 0L));
+
+            var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
+
+            // Act
+            var result = await service.ScrapeSearchLinksAsync(link);
+
+            // Assert
+            Assert.Equal("https://test.com/?s={0}", result.SearchUrl);
+        }
+
+        [Fact]
+        public async Task ScrapeSearchLinksAsync_ProbesNextPattern_WhenBodyDoesNotContainQuery()
+        {
+            // Arrange
+            var mainHtml = @"<html><body>No forms here</body></html>";
+            var (mainDoc, _) = await CreateDocument(mainHtml);
+
+            // /search/batman returns content but doesn't contain "batman"
+            var emptyProbeHtml = @"<html><body>No results</body></html>";
+            var (emptyProbeDoc, _) = await CreateDocument(emptyProbeHtml);
+
+            var probeHtml = @"<html><body>Showing results for batman</body></html>";
+            var (probeDoc, _) = await CreateDocument(probeHtml);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((mainDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((emptyProbeDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search?q=batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((probeDoc, 0L));
+
+            var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
+
+            // Act
+            var result = await service.ScrapeSearchLinksAsync(link);
+
+            // Assert
+            Assert.Equal("https://test.com/search?q={0}", result.SearchUrl);
+        }
+
+        [Fact]
+        public async Task ScrapeSearchLinksAsync_ProbesSucceeds_WhenLaterQueryMatches()
+        {
+            // Arrange
+            var mainHtml = @"<html><body>No forms here</body></html>";
+            var (mainDoc, _) = await CreateDocument(mainHtml);
+
+            // /search/batman returns content without "batman"
+            var emptyBatmanHtml = @"<html><body>No results here</body></html>";
+            var (emptyBatmanDoc, _) = await CreateDocument(emptyBatmanHtml);
+
+            // /search/mario returns content WITH "mario"
+            var marioHtml = @"<html><body>Showing results for mario</body></html>";
+            var (marioDoc, _) = await CreateDocument(marioHtml);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((mainDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((emptyBatmanDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/mario", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((marioDoc, 0L));
+
+            var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
+
+            // Act
+            var result = await service.ScrapeSearchLinksAsync(link);
+
+            // Assert
+            Assert.Equal("https://test.com/search/{0}", result.SearchUrl);
+        }
+
+        [Fact]
+        public async Task ScrapeSearchLinksAsync_Throws_WhenNoFormAndAllProbesFail()
+        {
+            // Arrange
+            var mainHtml = @"<html><body>No forms here</body></html>";
+            var (mainDoc, _) = await CreateDocument(mainHtml);
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ReturnsAsync((mainDoc, 0L));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search/batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ThrowsAsync(new HttpRequestException("Not found"));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/search?q=batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ThrowsAsync(new HttpRequestException("Not found"));
+
+            _webServiceMock
+                .Setup(w => w.GetHtmlDocumentAsync("https://test.com/?s=batman", It.IsAny<Uri?>(), It.IsAny<bool>()))
+                .ThrowsAsync(new HttpRequestException("Not found"));
+
+            var service = new SearchLinkService(_loggerMock.Object, _webServiceMock.Object);
+            var link = new WebsiteLink
+            {
+                Url = "https://test.com",
+                Title = "Test",
+                Category = "General",
+                Starred = false
+            };
+
+            // Act & Assert
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.ScrapeSearchLinksAsync(link));
+            Assert.Contains("search", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
