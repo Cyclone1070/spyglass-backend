@@ -111,7 +111,7 @@ if (app.Environment.IsDevelopment())
 else
 {
 	// In Production, we use a strict policy for the production frontend.
-	app.UseCors(policy => policy.WithOrigins("https://spyglass.cyc.fyi")
+	app.UseCors(policy => policy.WithOrigins("https://spyglass.hoangmai.dev", "https://spyglass.cyc.fyi")
 								.AllowAnyHeader()
 								.AllowAnyMethod());
 }
