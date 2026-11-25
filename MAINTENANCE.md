@@ -42,17 +42,40 @@ Keep logs and the final report in `$RUN_DIR`.
 
 ## Email blocker alerts
 
-Blocker emails use SMTP and read their settings from the shell environment.
-Keep them in `~/repos/dotfiles/zsh/secrets.zsh`, never in this repository:
+Email is specific to Spyglass, so its settings do **not** belong in the global
+dotfiles secrets. Cloudflare credentials there are shared across projects; this
+app password is not.
+
+The notifier loads a project-scoped file, `~/repos/spyglass-backend/.env.maintenance`
+by default. This is separate from the app’s `.env`: `.env` is loaded by the .NET
+process and contains runtime credentials, while the notifier is a shell script.
+Loading `.env` into the shell would pull Mongo and proxy credentials into it for
+no reason.
+
+Create it with mode `600`:
 
 ```bash
-export SPYGLASS_SMTP_HOST='smtp.example.com'
-export SPYGLASS_SMTP_PORT='587'
-export SPYGLASS_SMTP_USER='alerts@example.com'
-export SPYGLASS_SMTP_PASSWORD='app-password-here'
-export SPYGLASS_EMAIL_FROM='alerts@example.com'
-export SPYGLASS_EMAIL_TO='you@example.com'
+chmod 600 "$HOME/repos/spyglass-backend/.env.maintenance"
 ```
+
+Add:
+
+```bash
+SPYGLASS_SMTP_HOST=smtp.gmail.com
+SPYGLASS_SMTP_PORT=587
+SPYGLASS_SMTP_USER=hoangmai1070@gmail.com
+SPYGLASS_SMTP_PASSWORD=the-16-character-app-password
+SPYGLASS_EMAIL_FROM=hoangmai1070@gmail.com
+SPYGLASS_EMAIL_TO=hoangmai1070@gmail.com
+```
+
+`SPYGLASS_MAINTENANCE_ENV` can point the notifier at a different file if needed.
+The file is gitignored by `.env.*`, excluded from the Docker build context, and
+read only by the notifier.
+
+Do not reuse the app password in another project. Other projects may send from
+the same Gmail account, but each should have its own app password so revoking
+one does not break the others.
 
 Port 465 uses implicit TLS; other ports use STARTTLS. Gmail, iCloud, Fastmail,
 and Resend SMTP all work with these variables. Use an app-specific password, not
@@ -61,7 +84,6 @@ your primary account password.
 Test it once after configuring:
 
 ```bash
-source "$HOME/repos/dotfiles/zsh/secrets.zsh"
 cd "$HOME/repos/spyglass-backend"
 ./scripts/notify-blocker.sh \
   "Spyglass maintenance test" \
@@ -260,7 +282,6 @@ Stop and report, rather than guessing, when:
 Before marking the goal blocked, send the email alert:
 
 ```bash
-source "$HOME/repos/dotfiles/zsh/secrets.zsh"
 cd "$HOME/repos/spyglass-backend"
 ./scripts/notify-blocker.sh \
   "Spyglass maintenance blocked: <short reason>" \

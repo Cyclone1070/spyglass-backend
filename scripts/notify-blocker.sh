@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 # Send a maintenance blocker email through SMTP.
-# Credentials live in the shell environment, never in this repository.
+# Settings come from a project-scoped env file, never from this repository's
+# tracked files or the global dotfiles secrets.
 set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+mail_env="${SPYGLASS_MAINTENANCE_ENV:-$script_dir/../.env.maintenance}"
+if [[ -f "$mail_env" ]]; then
+	set -a
+	# shellcheck disable=SC1090
+	source "$mail_env"
+	set +a
+fi
 
 subject="${1:-Spyglass maintenance blocked}"
 body="${2:-The weekly maintenance run blocked. Check the run report.}"
