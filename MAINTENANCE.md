@@ -104,17 +104,20 @@ source code changes**. If it needs code changes, skip it and record why.
 ```bash
 cd "$HOME/repos/spyglass-backend"
 dotnet list package --outdated > "$RUN_DIR/backend-outdated.txt" 2>&1 || true
+dotnet list spyglass-backend.Tests package --outdated > "$RUN_DIR/backend-tests-outdated.txt" 2>&1 || true
 dotnet list package --vulnerable --include-transitive > "$RUN_DIR/backend-vulnerable.txt" 2>&1 || true
+dotnet list spyglass-backend.Tests package --vulnerable --include-transitive >> "$RUN_DIR/backend-vulnerable.txt" 2>&1 || true
 ```
 
 Update patch/minor/security versions with `dotnet add package <id> --version
 <version>`. For a transitive warning, update the direct package that pulls it in,
 or add a direct reference to a fixed version if that is the only safe option.
-Skip majors unless the full gate passes without code changes.
+Skip majors unless the full gate passes without code changes. Check the test
+project too; it has its own package set.
 
-Known baseline: the test project currently reports `SharpCompress` (moderate)
-and `Snappier` (high) transitive advisories. Treat them as maintenance targets;
-do not ignore them, but do not break the build to force a fix.
+Both projects should report no vulnerable packages. If an advisory reappears,
+find the direct package that pulls it in. The previous `SharpCompress` and
+`Snappier` advisories came through `MongoDB.Driver`.
 
 ## 5. Re-run the gate and repair
 
@@ -183,7 +186,8 @@ ssh cyc@100.73.151.89 'systemctl --user restart spyglass.service'
 ```
 
 This is the only step allowed to restart production. If the build or load fails,
-stop before restarting anything.
+stop before restarting anything. The backend `.dockerignore` excludes `.env`,
+tests, and local build output; do not remove those exclusions.
 
 ## 7. Canary (read-only)
 
