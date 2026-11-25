@@ -66,6 +66,8 @@ SPYGLASS_SMTP_PORT=587
 SPYGLASS_SMTP_USER=hoangmai1070@gmail.com
 SPYGLASS_SMTP_PASSWORD=the-16-character-app-password
 SPYGLASS_EMAIL_FROM=hoangmai1070@gmail.com
+# Optional; this is the name shown in the recipient's inbox.
+SPYGLASS_EMAIL_FROM_NAME='Spyglass Maintenance'
 SPYGLASS_EMAIL_TO=hoangmai1070@gmail.com
 ```
 
