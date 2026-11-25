@@ -38,8 +38,6 @@ port = int(os.environ["SPYGLASS_SMTP_PORT"])
 user = os.environ["SPYGLASS_SMTP_USER"]
 password = os.environ["SPYGLASS_SMTP_PASSWORD"]
 sender = os.environ["SPYGLASS_EMAIL_FROM"]
-sender_name = os.environ.get("SPYGLASS_EMAIL_FROM_NAME", "Spyglass Maintenance")
-sender_name = sender_name.replace("\n", " ").strip()
 to_header = os.environ["SPYGLASS_EMAIL_TO"]
 recipients = [addr.strip() for addr in to_header.split(",") if addr.strip()]
 subject = os.environ["NOTIFY_SUBJECT"].replace("\n", " ").strip()
@@ -50,7 +48,7 @@ if not recipients:
 
 message = EmailMessage()
 message["Subject"] = subject
-message["From"] = formataddr((sender_name, sender))
+message["From"] = formataddr(("Spyglass Maintenance", sender))
 message["To"] = ", ".join(recipients)
 message.set_content(body)
 
