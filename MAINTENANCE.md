@@ -40,6 +40,34 @@ mkdir -p "$RUN_DIR"
 
 Keep logs and the final report in `$RUN_DIR`.
 
+## Email blocker alerts
+
+Blocker emails use SMTP and read their settings from the shell environment.
+Keep them in `~/repos/dotfiles/zsh/secrets.zsh`, never in this repository:
+
+```bash
+export SPYGLASS_SMTP_HOST='smtp.example.com'
+export SPYGLASS_SMTP_PORT='587'
+export SPYGLASS_SMTP_USER='alerts@example.com'
+export SPYGLASS_SMTP_PASSWORD='app-password-here'
+export SPYGLASS_EMAIL_FROM='alerts@example.com'
+export SPYGLASS_EMAIL_TO='you@example.com'
+```
+
+Port 465 uses implicit TLS; other ports use STARTTLS. Gmail, iCloud, Fastmail,
+and Resend SMTP all work with these variables. Use an app-specific password, not
+your primary account password.
+
+Test it once after configuring:
+
+```bash
+source "$HOME/repos/dotfiles/zsh/secrets.zsh"
+cd "$HOME/repos/spyglass-backend"
+./scripts/notify-blocker.sh \
+  "Spyglass maintenance test" \
+  "The blocker notification path is configured."
+```
+
 ## 2. Verify the Sunday scrape (read-only)
 
 The production scraper deletes all existing links and then repopulates the
@@ -228,3 +256,20 @@ Stop and report, rather than guessing, when:
 - a required major update breaks the gate and cannot be repaired safely;
 - the same failure has no progress across multiple rounds;
 - a release canary fails.
+
+Before marking the goal blocked, send the email alert:
+
+```bash
+source "$HOME/repos/dotfiles/zsh/secrets.zsh"
+cd "$HOME/repos/spyglass-backend"
+./scripts/notify-blocker.sh \
+  "Spyglass maintenance blocked: <short reason>" \
+  "Blocker: <what happened>
+Run report: $RUN_DIR/summary.md
+Last gate: $RUN_DIR/gate-final.log
+No commit, push, or deploy was made." \
+  || echo "WARNING: blocker email failed; record that in the report"
+```
+
+If the email fails, still record the blocker and mention the notification failure
+in the report. Do not let a failed notification trigger a release.
