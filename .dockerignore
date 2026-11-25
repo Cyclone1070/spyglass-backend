@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+bin/
+obj/
+spyglass-backend.Tests/
+output.log
+relay/
+*.md
