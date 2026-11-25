@@ -84,18 +84,24 @@ docker compose -f docker-compose.dev.yml up -d --build
 
 ---
 
-## 🔑 Cloudflare Credentials (local only)
+## 🔑 Cloudflare Credentials (outside this repo)
 
-Deployment/agent automation reads these from the repo-root `.env`, which is gitignored and must never be committed:
+Cloudflare CLI credentials for `wrangler` live outside this repository in:
+
+```text
+~/repos/dotfiles/zsh/secrets.zsh
+```
+
+That file is gitignored, mode `600`, and already sourced by `~/.zshrc`. It exports:
 
 *   `CLOUDFLARE_API_TOKEN` — Account: `Workers Scripts Edit` + `Cloudflare Tunnel Edit`; Zone: `Workers Routes Edit` + `DNS Edit` + `Zone Read`
 *   `CLOUDFLARE_ACCOUNT_ID`
 *   `CLOUDFLARE_ZONE_ID`
 
-`wrangler` needs them exported. Do not `source .env` (the Mongo URI contains shell-special characters); use:
+For non-interactive shells, load them explicitly:
 
 ```bash
-export CLOUDFLARE_API_TOKEN=$(grep -E '^CLOUDFLARE_API_TOKEN=' .env | cut -d= -f2-)
-export CLOUDFLARE_ACCOUNT_ID=$(grep -E '^CLOUDFLARE_ACCOUNT_ID=' .env | cut -d= -f2-)
-export CLOUDFLARE_ZONE_ID=$(grep -E '^CLOUDFLARE_ZONE_ID=' .env | cut -d= -f2-)
+source "$HOME/repos/dotfiles/zsh/secrets.zsh"
 ```
+
+Do not copy these values into this repository or into `.env`.
